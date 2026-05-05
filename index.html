@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Mecklenburg Intel</title>
+  <meta name="description" content="Motivated-seller intelligence pipeline for Mecklenburg County, NC — stacked distress-pattern leads from public records." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -12,6 +13,7 @@
       --bg: #0A0A0A;
       --panel: #0F172A;
       --panel-2: #111c30;
+      --panel-3: #1A2540;
       --accent: #3B82F6;
       --accent-soft: #60A5FA;
       --text: #E5E7EB;
@@ -32,8 +34,8 @@
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
       font-size: 14px; line-height: 1.45;
     }
-    .wrap { max-width: 1400px; margin: 0 auto; padding: 32px 24px 64px; }
-    .topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 32px; }
+    .wrap { max-width: 1500px; margin: 0 auto; padding: 32px 24px 80px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 28px; }
     .brand { display: flex; align-items: center; gap: 12px; }
     .brand-mark {
       width: 36px; height: 36px; border-radius: 8px;
@@ -45,25 +47,31 @@
     h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.4px; }
     .tag { color: var(--accent-soft); font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600; }
     .meta { color: var(--text-dim); font-size: 12px; }
+    .meta a { color: var(--accent-soft); text-decoration: none; }
+    .meta a:hover { text-decoration: underline; }
 
-    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
     .stat {
       background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
-      padding: 16px 18px;
+      padding: 14px 18px;
     }
-    .stat .label { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-    .stat .value { font-size: 28px; font-weight: 700; margin-top: 6px; letter-spacing: -0.5px; }
+    .stat .label { color: var(--text-dim); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+    .stat .value { font-size: 26px; font-weight: 700; margin-top: 4px; letter-spacing: -0.5px; }
+    .stat .sub { color: var(--text-dim); font-size: 11px; margin-top: 2px; }
     .stat.hot .value { color: var(--hot); }
     .stat.warm .value { color: var(--warm); }
     .stat.active .value { color: var(--active); }
 
     .filterbar {
       background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
-      padding: 16px; margin-bottom: 16px;
-      display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+      padding: 14px 16px; margin-bottom: 12px;
+      display: flex; flex-wrap: wrap; gap: 14px; align-items: center;
     }
     .filter-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .filter-group .lbl { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-right: 6px; }
+    .filter-group .lbl {
+      color: var(--text-dim); font-size: 10px; text-transform: uppercase;
+      letter-spacing: 1px; font-weight: 600; margin-right: 4px;
+    }
     .pill {
       background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
       padding: 5px 12px; border-radius: 999px;
@@ -88,27 +96,76 @@
       padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;
     }
     .clear:hover { color: var(--text); border-color: var(--accent); }
+    .export {
+      background: var(--accent); color: #0A0A0A; border: 1px solid var(--accent);
+      padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;
+    }
+    .export:hover { background: var(--accent-soft); }
+    .export:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .slider-group { display: flex; align-items: center; gap: 8px; }
+    .slider-group input[type=range] { width: 110px; }
+    .slider-group .v {
+      font-variant-numeric: tabular-nums;
+      color: var(--accent-soft); font-size: 12px; font-weight: 600;
+      min-width: 26px; text-align: right;
+    }
+    .toggle {
+      background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+      padding: 5px 10px; border-radius: 6px;
+      font-size: 11px; font-weight: 500; cursor: pointer;
+      user-select: none; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .toggle .dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--muted);
+      transition: all 0.15s;
+    }
+    .toggle.on { color: var(--accent-soft); border-color: var(--accent); }
+    .toggle.on .dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
 
     .summary {
       color: var(--text-dim); font-size: 13px; margin: 8px 4px 12px;
     }
     .summary strong { color: var(--text); }
 
+    .colmenu {
+      position: relative; display: inline-block;
+    }
+    .colmenu-button {
+      background: var(--panel-2); color: var(--text-dim); border: 1px solid var(--border);
+      padding: 6px 10px; border-radius: 6px; font-size: 11px; cursor: pointer;
+    }
+    .colmenu-button:hover { color: var(--text); }
+    .colmenu-list {
+      display: none; position: absolute; right: 0; top: calc(100% + 4px); z-index: 20;
+      background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 12px; min-width: 200px;
+    }
+    .colmenu-list.on { display: block; }
+    .colmenu-list label {
+      display: flex; align-items: center; gap: 8px; padding: 4px 0;
+      font-size: 12px; cursor: pointer; color: var(--text);
+    }
+    .colmenu-list input { accent-color: var(--accent); }
+
     table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
     thead th {
       background: var(--panel-2); color: var(--text-dim);
-      font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px;
-      text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--border);
+      font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px;
+      text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border);
       cursor: pointer; user-select: none; white-space: nowrap;
     }
-    thead th:hover { color: var(--accent-soft); }
+    thead th.no-sort { cursor: default; }
+    thead th:hover:not(.no-sort) { color: var(--accent-soft); }
     thead th .arrow { color: var(--accent); margin-left: 4px; }
     tbody td {
-      padding: 12px 14px; border-bottom: 1px solid var(--border);
-      vertical-align: top; font-size: 13px;
+      padding: 10px 12px; border-bottom: 1px solid var(--border);
+      vertical-align: top; font-size: 12.5px;
     }
     tbody tr:hover { background: var(--panel-2); }
-    tbody tr:last-child td { border-bottom: none; }
+    tbody tr.expanded-anchor { background: var(--panel-2); }
+    tbody tr.expanded { background: var(--panel-3); }
+    tbody tr.expanded td { padding: 16px 16px; border-bottom: 1px solid var(--border); }
 
     .tier-badge {
       display: inline-block; padding: 3px 10px; border-radius: 999px;
@@ -119,16 +176,16 @@
     .tier-badge.active { background: var(--active-bg); color: var(--active); }
 
     .pat {
-      display: inline-block; padding: 2px 8px; border-radius: 4px;
-      font-size: 10px; font-weight: 700; letter-spacing: 0.5px; margin-right: 4px;
+      display: inline-block; padding: 2px 7px; border-radius: 4px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.5px; margin-right: 3px;
       background: var(--panel-2); color: var(--accent-soft); border: 1px solid var(--border);
     }
-    .pat.jfc { color: #F87171; border-color: rgba(248, 113, 113, 0.3); }
-    .pat.tax { color: #FBBF24; border-color: rgba(251, 191, 36, 0.3); }
-    .pat.estate { color: #A78BFA; border-color: rgba(167, 139, 250, 0.3); }
-    .pat.code { color: #34D399; border-color: rgba(52, 211, 153, 0.3); }
-    .pat.lien { color: #F472B6; border-color: rgba(244, 114, 182, 0.3); }
-    .pat.transfer { color: #FCD34D; border-color: rgba(252, 211, 77, 0.3); }
+    .pat.jfc { color: #F87171; border-color: rgba(248, 113, 113, 0.35); }
+    .pat.tax { color: #FBBF24; border-color: rgba(251, 191, 36, 0.35); }
+    .pat.estate { color: #A78BFA; border-color: rgba(167, 139, 250, 0.35); }
+    .pat.code { color: #34D399; border-color: rgba(52, 211, 153, 0.35); }
+    .pat.lien { color: #F472B6; border-color: rgba(244, 114, 182, 0.35); }
+    .pat.transfer { color: #FCD34D; border-color: rgba(252, 211, 77, 0.35); }
 
     .flag {
       display: inline-block; padding: 1px 6px; border-radius: 3px;
@@ -138,13 +195,50 @@
     .flag.urgent { background: rgba(244, 63, 94, 0.15); color: var(--hot); }
 
     .addr { font-weight: 600; color: var(--text); }
-    .city { color: var(--text-dim); font-size: 11px; margin-top: 2px; }
-    .owner { color: var(--text); font-size: 13px; }
-    .mailto-self { color: var(--text-dim); font-size: 11px; }
-    .mailto-elsewhere { color: var(--warm); font-size: 11px; font-weight: 600; }
-
+    .city { color: var(--text-dim); font-size: 10.5px; margin-top: 2px; }
+    .owner { color: var(--text); font-size: 12.5px; }
+    .mailto-self { color: var(--text-dim); font-size: 10.5px; }
+    .mailto-elsewhere { color: var(--warm); font-size: 10.5px; font-weight: 600; }
+    .num { font-variant-numeric: tabular-nums; }
+    .small { font-size: 10.5px; color: var(--text-dim); }
     .empty { text-align: center; padding: 48px; color: var(--text-dim); }
-    .legend { font-size: 11px; color: var(--text-dim); margin-top: 24px; }
+
+    .expand-btn {
+      background: transparent; border: 1px solid var(--border); color: var(--text-dim);
+      width: 22px; height: 22px; border-radius: 4px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 13px; line-height: 1;
+    }
+    .expand-btn:hover { color: var(--accent); border-color: var(--accent); }
+    .expand-btn.on { background: var(--accent); color: #0A0A0A; border-color: var(--accent); }
+
+    .detail-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;
+      margin-top: 8px;
+    }
+    .detail-card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px;
+    }
+    .detail-card h4 {
+      margin: 0 0 6px 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px;
+      color: var(--accent-soft); font-weight: 600;
+    }
+    .detail-card .kv { font-size: 11.5px; line-height: 1.5; }
+    .detail-card .kv b { color: var(--text); font-weight: 500; }
+    .detail-card .kv span { color: var(--text-dim); }
+    .signal-block {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
+      padding: 10px 12px; margin-top: 10px;
+    }
+    .signal-block h4 {
+      margin: 0 0 6px 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px;
+      color: var(--accent-soft); font-weight: 600;
+    }
+    .signal-row { font-size: 11.5px; padding: 4px 0; border-top: 1px dashed var(--border); }
+    .signal-row:first-of-type { border-top: none; }
+    .signal-row a { color: var(--accent-soft); }
+
+    .legend { font-size: 11px; color: var(--text-dim); margin-top: 24px; line-height: 1.7; }
     .legend span { margin-right: 14px; }
 
     .footer {
@@ -152,12 +246,17 @@
       margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border);
     }
     .footer .bolt { color: var(--accent); }
-
-    .num { font-variant-numeric: tabular-nums; }
-    .small { font-size: 11px; color: var(--text-dim); }
-
+    .footer code {
+      background: var(--muted); padding: 1px 6px; border-radius: 3px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px;
+    }
     a { color: var(--accent-soft); text-decoration: none; }
     a:hover { text-decoration: underline; }
+
+    /* Make the header a proper sticky on scroll */
+    @media (min-width: 900px) {
+      .filterbar.sticky { position: sticky; top: 0; z-index: 10; backdrop-filter: blur(6px); }
+    }
   </style>
 </head>
 <body>
@@ -167,10 +266,10 @@
         <div class="brand-mark">M</div>
         <div>
           <div class="tag">Mecklenburg Intel</div>
-          <h1>Motivated Seller Pipeline · Charlotte / Mecklenburg County, NC</h1>
+          <h1>Motivated-Seller Pipeline · Charlotte / Mecklenburg County, NC</h1>
         </div>
       </div>
-      <div class="meta" id="meta">loading...</div>
+      <div class="meta" id="meta"><a href="methodology.html">methodology &rarr;</a> · loading...</div>
     </div>
 
     <div class="stats" id="stats"></div>
@@ -185,49 +284,76 @@
       </div>
       <div class="filter-group" id="patternfilters">
         <span class="lbl">Pattern</span>
-        <!-- pills populated dynamically -->
       </div>
-      <input class="search" id="search" type="text" placeholder="Search address, owner, PID, case#..." />
+      <input class="search" id="search" type="text" placeholder="Search address, owner, PID, case#, decedent..." />
       <button class="clear" id="clear">Reset</button>
+      <button class="export" id="export">Export CSV</button>
+    </div>
+
+    <div class="filterbar">
+      <div class="filter-group slider-group">
+        <span class="lbl">Equity ≥</span>
+        <input type="range" id="rEquity" min="0" max="100" step="5" value="0" />
+        <span class="v" id="vEquity">0%</span>
+      </div>
+      <div class="filter-group slider-group">
+        <span class="lbl">Yrs Owned ≥</span>
+        <input type="range" id="rYears" min="0" max="50" step="1" value="0" />
+        <span class="v" id="vYears">0y</span>
+      </div>
+      <div class="filter-group">
+        <span class="toggle" id="tAbsentee" data-flag="is_absentee">
+          <span class="dot"></span>Absentee
+        </span>
+        <span class="toggle" id="tSenior" data-flag="is_senior">
+          <span class="dot"></span>Senior
+        </span>
+        <span class="toggle" id="tEntity" data-flag="is_entity">
+          <span class="dot"></span>Entity owner
+        </span>
+        <span class="toggle" id="tInherited" data-flag="is_likely_inherited">
+          <span class="dot"></span>Likely inherited
+        </span>
+        <span class="toggle" id="tDemo" data-flag="demolition_order">
+          <span class="dot"></span>Demolition order
+        </span>
+      </div>
+      <div class="colmenu">
+        <button class="colmenu-button" id="colmenuBtn">Columns ▾</button>
+        <div class="colmenu-list" id="colmenuList"></div>
+      </div>
     </div>
 
     <div class="summary" id="summary"></div>
 
     <table>
       <thead>
-        <tr>
-          <th data-sort="tier">Tier</th>
-          <th data-sort="address">Address</th>
-          <th data-sort="owner">Owner</th>
-          <th>Patterns</th>
-          <th>Flags</th>
-          <th data-sort="year_built">Built</th>
-          <th data-sort="total_market_value">Value</th>
-          <th>Mail Addr</th>
-        </tr>
+        <tr id="thead-row"></tr>
       </thead>
       <tbody id="tbody">
-        <tr><td colspan="8" class="empty">Loading leads...</td></tr>
+        <tr><td colspan="9" class="empty">Loading leads...</td></tr>
       </tbody>
     </table>
 
     <div class="legend">
-      <span><b style="color:var(--accent-soft)">Patterns:</b></span>
+      <b style="color:var(--accent-soft)">Patterns:</b>
       <span class="pat jfc">JFC</span> Judicial Foreclosure
       <span class="pat tax">TAX</span> Tax Distress
-      <span class="pat estate">ESTATE</span> Probate Opened
+      <span class="pat estate">ESTATE</span> Probate
       <span class="pat code">CODE</span> Code / Demolition
       <span class="pat lien">LIEN</span> Lien / Judgment
       <span class="pat transfer">TRANSFER</span> Distressed Conveyance
-      <br><br>
+      <br>
       <b style="color:var(--accent-soft)">Tier rules:</b>
-      <span><span class="tier-badge hot">HOT</span> 3+ patterns stacked</span>
-      <span><span class="tier-badge warm">WARM</span> 2 patterns</span>
-      <span><span class="tier-badge active">ACTIVE</span> 1 pattern</span>
+      <span class="tier-badge hot">HOT</span> 3+ patterns stacked &nbsp;
+      <span class="tier-badge warm">WARM</span> 2 patterns &nbsp;
+      <span class="tier-badge active">ACTIVE</span> 1 pattern &nbsp;
+      &nbsp; · &nbsp; <a href="methodology.html">how scoring works &rarr;</a>
     </div>
 
     <div class="footer">
       <span class="bolt">⚡</span> Mecklenburg Intel · POC · Built by Jarvis
+      <span id="footerMeta"></span>
     </div>
   </div>
 
@@ -240,31 +366,65 @@ const PATTERN_LABELS = {
   estate: "Probate / Estate",
   code: "Code / Demolition",
   lien: "Lien / Judgment",
-  transfer: "Distressed Conveyance"
+  transfer: "Distressed Conveyance",
 };
 const TIER_RANK = { hot: 3, warm: 2, active: 1 };
+
+const COLUMNS = [
+  { key: "expand",   label: "",          sort: false, default: true,  no_export: true, render: r => `<button class="expand-btn ${expanded.has(r.pid) ? "on" : ""}" data-expand="${escape(r.pid)}">+</button>` },
+  { key: "tier",     label: "Tier",      sort: true,  default: true,  render: r => `<span class="tier-badge ${r.tier}">${r.tier}</span><div class="small num">${r.stack_count}p · score ${r.distress_score ?? r.raw_score ?? 0}</div>` },
+  { key: "address",  label: "Address",   sort: true,  default: true,  render: r => `<div class="addr">${escape(r.address || "—")}</div><div class="city">PID ${escape(r.pid)} · <a href="${escape(r.polaris_url)}" target="_blank" rel="noopener">POLARIS ↗</a>${r.city ? " · " + escape(r.city) : ""}</div>` },
+  { key: "owner",    label: "Owner",     sort: true,  default: true,  render: r => `<div class="owner">${escape(r.owner || "—")}</div>${r.is_entity ? `<div class="small">entity</div>` : ""}` },
+  { key: "patterns", label: "Patterns",  sort: false, default: true,  render: r => (r.patterns || []).map(patternPill).join("") },
+  { key: "flags",    label: "Flags",     sort: false, default: true,  render: r => ((r.flags || []).slice(0, 6).map(flagBadge).join("")) || "<span class='small'>–</span>" },
+  { key: "year_built", label: "Built",   sort: true,  default: true,  render: r => `<span class="num">${fmtYear(r.year_built)}</span>` },
+  { key: "total_market_value", label: "Value",  sort: true, default: true,  render: r => `<span class="num">${fmtMoney(r.total_market_value)}</span>` },
+  { key: "estimated_equity_pct", label: "Equity",  sort: true, default: false, render: r => `<span class="num">${fmtPct(r.estimated_equity_pct)}</span>` },
+  { key: "years_owned", label: "Yrs Own", sort: true, default: false, render: r => `<span class="num">${r.years_owned == null ? "<span class='small'>–</span>" : r.years_owned + "y"}</span>` },
+  { key: "gis_acres", label: "Acres",   sort: true,  default: false, render: r => `<span class="num">${r.gis_acres == null ? "<span class='small'>–</span>" : (+r.gis_acres).toFixed(2)}</span>` },
+  { key: "bedrooms", label: "Bed/Bath", sort: true,  default: false, render: r => `<span class="num">${(r.bedrooms ?? "–")}/${(r.fullbath ?? "–")}</span>` },
+  { key: "mail",     label: "Mail Addr", sort: false, default: true,  render: r => mailHtml(r) },
+];
 
 let DATA = null;
 let RECORDS = [];
 const filters = {
   tier: "all",
-  patterns: new Set(),   // empty = all patterns
-  search: ""
+  patterns: new Set(),
+  search: "",
+  minEquity: 0,
+  minYears: 0,
+  is_absentee: false,
+  is_senior: false,
+  is_entity: false,
+  is_likely_inherited: false,
+  demolition_order: false,
 };
 const sortState = { key: "tier", dir: "desc" };
+const expanded = new Set();
+const visibleColumns = new Set(COLUMNS.filter(c => c.default).map(c => c.key));
 
-// ---- Single source of truth for both filter counts AND filter results.
-// All visible filtering MUST go through matches(). Don't write a parallel
-// filter elsewhere — the Two-Truths Bug starts there.
+// ---- single source of truth for filters --------------------------------
 function matches(lead) {
   if (filters.tier !== "all" && lead.tier !== filters.tier) return false;
   if (filters.patterns.size > 0) {
     let any = false;
-    for (const p of lead.patterns) {
+    for (const p of (lead.patterns || [])) {
       if (filters.patterns.has(p)) { any = true; break; }
     }
     if (!any) return false;
   }
+  if (filters.minEquity > 0) {
+    if (lead.estimated_equity_pct == null || lead.estimated_equity_pct < filters.minEquity) return false;
+  }
+  if (filters.minYears > 0) {
+    if (lead.years_owned == null || lead.years_owned < filters.minYears) return false;
+  }
+  if (filters.is_absentee && !lead.is_absentee) return false;
+  if (filters.is_senior && !lead.is_senior) return false;
+  if (filters.is_entity && !lead.is_entity) return false;
+  if (filters.is_likely_inherited && !lead.is_likely_inherited) return false;
+  if (filters.demolition_order && !(lead.flags || []).includes("demolition_order")) return false;
   if (filters.search) {
     const q = filters.search.toLowerCase();
     const blob = [
@@ -273,7 +433,6 @@ function matches(lead) {
       ...(lead.flags || [])
     ].join(" ").toLowerCase();
     if (!blob.includes(q)) {
-      // also search inside signal payloads (case numbers, decedent names)
       const sigBlob = JSON.stringify(lead.signals || {}).toLowerCase();
       if (!sigBlob.includes(q)) return false;
     }
@@ -281,67 +440,143 @@ function matches(lead) {
   return true;
 }
 
-function fmtMoney(v) {
-  if (v == null || v === "" || v === 0) return "<span class='small'>–</span>";
-  const n = Number(v);
-  if (!isFinite(n)) return v;
-  return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
-}
-
-function fmtYear(v) {
-  if (v == null || v === "" || v === 0) return "<span class='small'>–</span>";
-  return String(v);
-}
-
-function patternPill(p) {
-  return `<span class="pat ${p}" title="${PATTERN_LABELS[p] || p}">${p.toUpperCase()}</span>`;
-}
-
-function flagBadge(f) {
-  const urgent = (f === "demolition_order" || f === "code_repeat_violator" || f === "heirs_property_indicator");
-  return `<span class="flag ${urgent ? "urgent" : ""}">${f.replace(/_/g, " ")}</span>`;
-}
-
-function rowHtml(lead) {
-  const tierBadge = `<span class="tier-badge ${lead.tier}">${lead.tier}</span>`;
-  const pats = (lead.patterns || []).map(patternPill).join("");
-  const flags = (lead.flags || []).slice(0, 6).map(flagBadge).join("");
-  const mailIsSelf = !lead.mail_addr || (lead.mail_addr.toUpperCase().split(",")[0].trim() === (lead.address || "").toUpperCase().split(",")[0].trim());
-  const mailHtml = mailIsSelf
-    ? `<span class="mailto-self">on-site</span>`
-    : `<span class="mailto-elsewhere">${escape(lead.mail_addr)} ${lead.mail_city ? escape(lead.mail_city) : ""} ${lead.mail_state ? escape(lead.mail_state) : ""} ${lead.mail_zip ? escape(lead.mail_zip) : ""}</span>`;
-  return `
-    <tr>
-      <td>${tierBadge}<div class="small num">${lead.stack_count}p · ${lead.raw_score}</div></td>
-      <td>
-        <div class="addr">${escape(lead.address || "—")}</div>
-        <div class="city">PID ${escape(lead.pid)}${lead.city ? " · " + escape(lead.city) : ""}</div>
-      </td>
-      <td>
-        <div class="owner">${escape(lead.owner || "—")}</div>
-        ${lead.owner2 ? `<div class="small">${escape(lead.owner2)}</div>` : ""}
-      </td>
-      <td>${pats}</td>
-      <td>${flags || "<span class='small'>–</span>"}</td>
-      <td class="num">${fmtYear(lead.year_built)}</td>
-      <td class="num">${fmtMoney(lead.total_market_value)}</td>
-      <td>${mailHtml}</td>
-    </tr>
-  `;
-}
-
+// ---- formatting helpers -----------------------------------------------
 function escape(s) {
   if (s == null) return "";
   return String(s)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
+function fmtMoney(v) {
+  if (v == null || v === "" || v === 0) return "<span class='small'>–</span>";
+  const n = Number(v);
+  if (!isFinite(n)) return v;
+  return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
+}
+function fmtYear(v) {
+  if (v == null || v === "" || v === 0) return "<span class='small'>–</span>";
+  return String(v);
+}
+function fmtPct(v) {
+  if (v == null) return "<span class='small'>–</span>";
+  return Number(v).toFixed(0) + "%";
+}
+function patternPill(p) {
+  return `<span class="pat ${p}" title="${PATTERN_LABELS[p] || p}">${p.toUpperCase()}</span>`;
+}
+function flagBadge(f) {
+  const urgent = (f === "demolition_order" || f === "code_repeat_violator" || f === "heirs_property_indicator" || f === "post_estate_recent_sale");
+  return `<span class="flag ${urgent ? "urgent" : ""}">${f.replace(/_/g, " ")}</span>`;
+}
+function mailHtml(r) {
+  const siteFirst = (r.address || "").toUpperCase().split(",")[0].trim();
+  const mailFirst = (r.mail_addr || "").toUpperCase().split(",")[0].trim();
+  if (!r.mail_addr || siteFirst === mailFirst) return `<span class="mailto-self">on-site</span>`;
+  return `<span class="mailto-elsewhere">${escape(r.mail_addr)}${r.mail_city ? ", " + escape(r.mail_city) : ""}${r.mail_state ? " " + escape(r.mail_state) : ""}${r.mail_zip ? " " + escape(r.mail_zip) : ""}</span>`;
+}
+
+function detailHtml(r) {
+  // ---- structured detail panel for one expanded row ----
+  const card = (title, items) =>
+    `<div class="detail-card"><h4>${title}</h4><div class="kv">${items.map(([k, v]) =>
+      v == null || v === "" ? "" : `<div><span>${k}:</span> <b>${escape(String(v))}</b></div>`).filter(Boolean).join("")}</div></div>`;
+
+  const cards = [
+    card("Identity", [
+      ["PID", r.pid],
+      ["NC PIN", r.nc_pin],
+      ["Tier", r.tier],
+      ["Stack count", r.stack_count],
+      ["Distress score", r.distress_score],
+    ]),
+    card("Owner", [
+      ["Owner 1", r.owner],
+      ["Parsed", r.owner_parsed && (r.owner_parsed.is_entity ? "(entity)" :
+        [r.owner_parsed.first_name, r.owner_parsed.middle_name, r.owner_parsed.last_name, r.owner_parsed.suffix].filter(Boolean).join(" "))],
+      ["Owner 2", r.owner2],
+      ["Owner type", r.owner_type],
+      ["Entity?", r.is_entity ? "yes" : "no"],
+      ["Likely landlord", r.is_likely_landlord ? "yes" : "no"],
+    ]),
+    card("Mailing", [
+      ["Line 1", r.mail_addr],
+      ["Line 2", r.mail_addr2],
+      ["City/St/Zip", [r.mail_city, r.mail_state, r.mail_zip].filter(Boolean).join(" ")],
+      ["Absentee?", r.is_absentee ? "yes" : "no"],
+    ]),
+    card("Structure", [
+      ["Building type", r.building_type],
+      ["Land use", r.land_use],
+      ["Year built", r.year_built],
+      ["Eff year", r.eff_year_built],
+      ["Heated sf", r.heated_area],
+      ["Total sf", r.total_area],
+      ["Bed", r.bedrooms],
+      ["Bath", `${r.fullbath ?? "–"}f${r.halfbath ? "/" + r.halfbath + "h" : ""}`],
+      ["Grade", r.grade],
+      ["Heat", r.heat],
+    ]),
+    card("Land", [
+      ["GIS acres", r.gis_acres],
+      ["Total acres", r.total_acres],
+      ["Vacant/Improved", r.vacant_or_improved],
+      ["Lot value %", r.lot_value_pct == null ? null : r.lot_value_pct + "%"],
+    ]),
+    card("Value", [
+      ["Total market", fmtMoney(r.total_market_value).replace(/<[^>]+>/g, "")],
+      ["Land value", fmtMoney(r.land_value).replace(/<[^>]+>/g, "")],
+      ["Building value", fmtMoney(r.building_value).replace(/<[^>]+>/g, "")],
+      ["Equity %", r.estimated_equity_pct == null ? null : r.estimated_equity_pct + "%"],
+    ]),
+    card("Sale", [
+      ["Sale date", r.sale_date ? new Date(Number(r.sale_date)).toISOString().slice(0, 10) : null],
+      ["Sale price", r.sale_price == null ? null : "$" + Number(r.sale_price).toLocaleString()],
+      ["Years owned", r.years_owned == null ? null : r.years_owned + "y"],
+      ["Deed type", r.deed_type],
+      ["Deed bk/pg", r.deed_book ? r.deed_book + "/" + r.deed_page : ""],
+    ]),
+    card("Exemptions", [
+      ["Raw", r.exemption || "(none)"],
+      ["Homestead", r.is_homestead ? "yes" : "no"],
+      ["Senior", r.is_senior ? "yes" : "no"],
+      ["Disabled veteran", r.is_disabled_veteran ? "yes" : "no"],
+      ["Likely inherited", r.is_likely_inherited ? "yes" : "no"],
+    ]),
+  ].join("");
+
+  let signalsHtml = "";
+  for (const [pat, items] of Object.entries(r.signals || {})) {
+    if (!items || !items.length) continue;
+    signalsHtml += `<div class="signal-block">
+      <h4>${pat.toUpperCase()} signals</h4>
+      ${items.map(s => {
+        const parts = Object.entries(s).filter(([k, v]) => v && k !== "summary").map(([k, v]) =>
+          `<span><span style="color:var(--text-dim)">${k}:</span> ${escape(typeof v === "string" ? v : JSON.stringify(v))}</span>`).join(" · ");
+        const summary = s.summary ? `<div style="color:var(--text-dim);margin-top:3px">${escape(s.summary).slice(0, 240)}…</div>` : "";
+        const link = s.url || s.detail_url ? ` · <a href="${escape(s.url || s.detail_url)}" target="_blank" rel="noopener">source ↗</a>` : "";
+        return `<div class="signal-row">${parts}${link}${summary}</div>`;
+      }).join("")}
+    </div>`;
+  }
+  if (!signalsHtml) signalsHtml = `<div class="signal-block"><h4>Signals</h4><div class="signal-row small">no per-pattern detail attached</div></div>`;
+
+  const flagsList = (r.flags || []).map(flagBadge).join(" ") || "<span class='small'>none</span>";
+  return `
+    <td colspan="${visibleCols().length}">
+      <div style="margin-bottom:8px"><b style="color:var(--accent-soft);font-size:11px;text-transform:uppercase;letter-spacing:0.8px">All flags:</b> ${flagsList}</div>
+      <div class="detail-grid">${cards}</div>
+      ${signalsHtml}
+    </td>
+  `;
+}
+
+function visibleCols() { return COLUMNS.filter(c => visibleColumns.has(c.key)); }
 
 function compareForSort(a, b, key) {
   if (key === "tier") {
     return (TIER_RANK[a.tier] || 0) - (TIER_RANK[b.tier] || 0)
-      || (a.stack_count - b.stack_count)
-      || (a.raw_score - b.raw_score);
+      || ((a.stack_count || 0) - (b.stack_count || 0))
+      || ((a.distress_score || a.raw_score || 0) - (b.distress_score || b.raw_score || 0));
   }
   const av = a[key], bv = b[key];
   if (av == null && bv == null) return 0;
@@ -351,31 +586,44 @@ function compareForSort(a, b, key) {
   return String(av).localeCompare(String(bv));
 }
 
-function render() {
-  // Apply matches() ONCE — this is the single filtered set.
-  const filtered = RECORDS.filter(matches);
+function buildHeader() {
+  const tr = document.getElementById("thead-row");
+  tr.innerHTML = visibleCols().map(c =>
+    `<th class="${c.sort ? "" : "no-sort"}" ${c.sort ? `data-sort="${c.key}"` : ""}>${c.label}</th>`
+  ).join("");
+}
 
+function render() {
+  const filtered = RECORDS.filter(matches);
   filtered.sort((a, b) => {
     const c = compareForSort(a, b, sortState.key);
     return sortState.dir === "desc" ? -c : c;
   });
 
-  // ---- Stats: derived from the SAME filtered array. No parallel counting.
+  // Stats derived from same filtered array
   const tierCounts = { hot: 0, warm: 0, active: 0 };
   const patCounts = { jfc: 0, tax: 0, estate: 0, code: 0, lien: 0, transfer: 0 };
+  let highConfWarm = 0;
   for (const r of filtered) {
     tierCounts[r.tier] = (tierCounts[r.tier] || 0) + 1;
     for (const p of r.patterns || []) patCounts[p] = (patCounts[p] || 0) + 1;
+    if (r.tier === "warm" && (
+      (r.flags || []).includes("demolition_order") ||
+      (r.flags || []).includes("code_housing_case") ||
+      r.is_absentee
+    )) highConfWarm++;
   }
+  const warmHC = tierCounts.warm > 0
+    ? Math.round((highConfWarm / tierCounts.warm) * 100) + "%"
+    : "—";
 
   document.getElementById("stats").innerHTML = `
-    <div class="stat"><div class="label">Total Visible</div><div class="value num">${filtered.length.toLocaleString()}</div></div>
-    <div class="stat hot"><div class="label">Hot · 3+</div><div class="value num">${tierCounts.hot.toLocaleString()}</div></div>
-    <div class="stat warm"><div class="label">Warm · 2</div><div class="value num">${tierCounts.warm.toLocaleString()}</div></div>
-    <div class="stat active"><div class="label">Active · 1</div><div class="value num">${tierCounts.active.toLocaleString()}</div></div>
+    <div class="stat"><div class="label">Visible</div><div class="value num">${filtered.length.toLocaleString()}</div><div class="sub">of ${RECORDS.length.toLocaleString()}</div></div>
+    <div class="stat hot"><div class="label">Hot · 3+</div><div class="value num">${tierCounts.hot}</div><div class="sub">3+ patterns stacked</div></div>
+    <div class="stat warm"><div class="label">Warm · 2</div><div class="value num">${tierCounts.warm}</div><div class="sub">${warmHC} high-conf</div></div>
+    <div class="stat active"><div class="label">Active · 1</div><div class="value num">${tierCounts.active.toLocaleString()}</div><div class="sub">single pattern</div></div>
   `;
 
-  // Update pattern pill counts so the user sees how many leads match each.
   document.querySelectorAll('#patternfilters .pill').forEach(p => {
     const v = p.getAttribute("data-value");
     const ct = patCounts[v] || 0;
@@ -383,20 +631,13 @@ function render() {
     p.innerHTML = `${label}<span class="ct num">${ct.toLocaleString()}</span>`;
   });
 
-  // Summary line — always derived from the same filtered array.
   document.getElementById("summary").innerHTML =
-    `Showing <strong>${filtered.length.toLocaleString()}</strong> of <strong>${RECORDS.length.toLocaleString()}</strong> leads. ` +
-    `Tier filter: <strong>${filters.tier}</strong>. ` +
-    (filters.patterns.size > 0
-      ? `Pattern filter: <strong>${[...filters.patterns].join(", ")}</strong>. `
-      : `All patterns. `) +
-    (filters.search ? `Search: "<strong>${escape(filters.search)}</strong>". ` : ``);
+    `Showing <strong>${filtered.length.toLocaleString()}</strong> of <strong>${RECORDS.length.toLocaleString()}</strong> leads.`;
 
-  // Update th sort indicator
   document.querySelectorAll("th[data-sort]").forEach(th => {
     const k = th.getAttribute("data-sort");
-    const arrow = th.querySelector(".arrow");
-    if (arrow) arrow.remove();
+    const old = th.querySelector(".arrow");
+    if (old) old.remove();
     if (k === sortState.key) {
       const sp = document.createElement("span");
       sp.className = "arrow";
@@ -405,19 +646,75 @@ function render() {
     }
   });
 
-  // Render table
   const tbody = document.getElementById("tbody");
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" class="empty">No leads match the current filters.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${visibleCols().length}" class="empty">No leads match the current filters.</td></tr>`;
+    document.getElementById("export").disabled = true;
     return;
   }
-  // Cap rendered rows for performance; user can refine filters
-  const RENDER_CAP = 1000;
+  document.getElementById("export").disabled = false;
+  const RENDER_CAP = 600;
   const slice = filtered.slice(0, RENDER_CAP);
-  tbody.innerHTML = slice.map(rowHtml).join("");
-  if (filtered.length > RENDER_CAP) {
-    tbody.innerHTML += `<tr><td colspan="8" class="empty">… ${(filtered.length - RENDER_CAP).toLocaleString()} more rows hidden. Use filters or search to narrow.</td></tr>`;
+  let html = "";
+  for (const r of slice) {
+    const isExp = expanded.has(r.pid);
+    html += `<tr class="${isExp ? "expanded-anchor" : ""}">${visibleCols().map(c => `<td>${c.render(r)}</td>`).join("")}</tr>`;
+    if (isExp) html += `<tr class="expanded">${detailHtml(r)}</tr>`;
   }
+  if (filtered.length > RENDER_CAP) {
+    html += `<tr><td colspan="${visibleCols().length}" class="empty">… ${(filtered.length - RENDER_CAP).toLocaleString()} more rows hidden. Use filters or search to narrow.</td></tr>`;
+  }
+  tbody.innerHTML = html;
+
+  // Stash filtered for export
+  window.__filtered = filtered;
+}
+
+function exportCsv() {
+  const rows = window.__filtered || RECORDS.filter(matches);
+  const cols = [
+    "pid", "address", "city", "owner", "owner_first", "owner_middle", "owner_last",
+    "mail_addr", "mail_addr2", "mail_city", "mail_state", "mail_zip",
+    "is_entity", "is_absentee", "is_senior", "tier", "patterns", "flags",
+    "year_built", "total_market_value", "estimated_equity_pct", "years_owned",
+    "gis_acres", "bedrooms", "fullbath", "halfbath",
+    "polaris_url",
+    // skip-trace placeholders
+    "phone1", "phone2", "phone3", "email1", "email2",
+  ];
+  const csvLines = [cols.join(",")];
+  for (const r of rows) {
+    const owner_first = r.owner_parsed?.first_name || "";
+    const owner_middle = r.owner_parsed?.middle_name || "";
+    const owner_last = r.owner_parsed?.last_name || "";
+    const v = (x) => {
+      if (x == null) return "";
+      let s = String(x);
+      if (Array.isArray(x)) s = x.join("|");
+      if (/[",\n]/.test(s)) s = `"${s.replace(/"/g, '""')}"`;
+      return s;
+    };
+    csvLines.push(cols.map(c => {
+      switch (c) {
+        case "owner_first": return v(owner_first);
+        case "owner_middle": return v(owner_middle);
+        case "owner_last": return v(owner_last);
+        case "patterns": return v((r.patterns || []).join("|"));
+        case "flags": return v((r.flags || []).join("|"));
+        case "phone1": case "phone2": case "phone3":
+        case "email1": case "email2": return "";
+        default: return v(r[c]);
+      }
+    }).join(","));
+  }
+  const blob = new Blob([csvLines.join("\n")], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `mecklenburg-leads-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
 }
 
 function attachListeners() {
@@ -431,7 +728,6 @@ function attachListeners() {
     });
   });
 
-  // Pattern pills (built dynamically)
   const pf = document.getElementById("patternfilters");
   ["jfc", "tax", "estate", "code", "lien", "transfer"].forEach(k => {
     const sp = document.createElement("span");
@@ -442,11 +738,9 @@ function attachListeners() {
     sp.textContent = k.toUpperCase();
     sp.addEventListener("click", () => {
       if (filters.patterns.has(k)) {
-        filters.patterns.delete(k);
-        sp.classList.remove("on");
+        filters.patterns.delete(k); sp.classList.remove("on");
       } else {
-        filters.patterns.add(k);
-        sp.classList.add("on");
+        filters.patterns.add(k); sp.classList.add("on");
       }
       render();
     });
@@ -455,27 +749,54 @@ function attachListeners() {
 
   // Search
   const search = document.getElementById("search");
-  let searchTimer = null;
+  let t = null;
   search.addEventListener("input", () => {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => {
-      filters.search = search.value.trim();
-      render();
-    }, 120);
+    clearTimeout(t);
+    t = setTimeout(() => { filters.search = search.value.trim(); render(); }, 120);
   });
 
-  // Sortable headers
-  document.querySelectorAll("th[data-sort]").forEach(th => {
-    th.addEventListener("click", () => {
-      const k = th.getAttribute("data-sort");
-      if (sortState.key === k) {
-        sortState.dir = sortState.dir === "desc" ? "asc" : "desc";
-      } else {
-        sortState.key = k;
-        sortState.dir = "desc";
-      }
+  // Sliders
+  const rEq = document.getElementById("rEquity");
+  const vEq = document.getElementById("vEquity");
+  rEq.addEventListener("input", () => {
+    filters.minEquity = +rEq.value; vEq.textContent = rEq.value + "%"; render();
+  });
+  const rYr = document.getElementById("rYears");
+  const vYr = document.getElementById("vYears");
+  rYr.addEventListener("input", () => {
+    filters.minYears = +rYr.value; vYr.textContent = rYr.value + "y"; render();
+  });
+
+  // Toggles
+  document.querySelectorAll(".toggle[data-flag]").forEach(el => {
+    el.addEventListener("click", () => {
+      const f = el.getAttribute("data-flag");
+      filters[f] = !filters[f];
+      el.classList.toggle("on", filters[f]);
       render();
     });
+  });
+
+  // Sortable headers (delegated)
+  document.getElementById("thead-row").addEventListener("click", e => {
+    const th = e.target.closest("th[data-sort]");
+    if (!th) return;
+    const k = th.getAttribute("data-sort");
+    if (sortState.key === k) {
+      sortState.dir = sortState.dir === "desc" ? "asc" : "desc";
+    } else {
+      sortState.key = k; sortState.dir = "desc";
+    }
+    render();
+  });
+
+  // Row expand (delegated)
+  document.getElementById("tbody").addEventListener("click", e => {
+    const btn = e.target.closest("[data-expand]");
+    if (!btn) return;
+    const pid = btn.getAttribute("data-expand");
+    if (expanded.has(pid)) expanded.delete(pid); else expanded.add(pid);
+    render();
   });
 
   // Reset
@@ -483,12 +804,41 @@ function attachListeners() {
     filters.tier = "all";
     filters.patterns.clear();
     filters.search = "";
-    document.querySelectorAll('.pill[data-filter="tier"]').forEach(x => {
-      x.classList.toggle("on", x.getAttribute("data-value") === "all");
-    });
+    filters.minEquity = 0;
+    filters.minYears = 0;
+    filters.is_absentee = filters.is_senior = filters.is_entity =
+      filters.is_likely_inherited = filters.demolition_order = false;
+    document.querySelectorAll('.pill[data-filter="tier"]').forEach(x =>
+      x.classList.toggle("on", x.getAttribute("data-value") === "all"));
     document.querySelectorAll('.pill[data-filter="pattern"]').forEach(x => x.classList.remove("on"));
+    document.querySelectorAll(".toggle[data-flag]").forEach(x => x.classList.remove("on"));
     document.getElementById("search").value = "";
+    document.getElementById("rEquity").value = 0;
+    document.getElementById("vEquity").textContent = "0%";
+    document.getElementById("rYears").value = 0;
+    document.getElementById("vYears").textContent = "0y";
+    expanded.clear();
     render();
+  });
+
+  // Export
+  document.getElementById("export").addEventListener("click", exportCsv);
+
+  // Column menu
+  const cmBtn = document.getElementById("colmenuBtn");
+  const cmList = document.getElementById("colmenuList");
+  cmList.innerHTML = COLUMNS.filter(c => c.key !== "expand" && c.key !== "tier" && c.key !== "address" && c.key !== "owner" && c.key !== "patterns").map(c =>
+    `<label><input type="checkbox" data-col="${c.key}" ${visibleColumns.has(c.key) ? "checked" : ""}>${c.label || c.key}</label>`
+  ).join("");
+  cmBtn.addEventListener("click", e => { e.stopPropagation(); cmList.classList.toggle("on"); });
+  document.addEventListener("click", () => cmList.classList.remove("on"));
+  cmList.addEventListener("click", e => e.stopPropagation());
+  cmList.addEventListener("change", e => {
+    const cb = e.target.closest("input[type=checkbox]");
+    if (!cb) return;
+    const k = cb.getAttribute("data-col");
+    if (cb.checked) visibleColumns.add(k); else visibleColumns.delete(k);
+    buildHeader(); render();
   });
 }
 
@@ -498,14 +848,17 @@ async function load() {
     if (!r.ok) throw new Error("HTTP " + r.status);
     DATA = await r.json();
     RECORDS = DATA.records || [];
+    const ts = DATA.generated_at ? new Date(DATA.generated_at).toLocaleString() : "—";
+    const commit = DATA.source_commit ? `<code>${escape(DATA.source_commit)}</code>` : "";
     document.getElementById("meta").innerHTML =
-      `<span>${RECORDS.length.toLocaleString()} leads · generated ${
-        DATA.generated_at ? new Date(DATA.generated_at).toLocaleString() : "—"
-      }</span>`;
+      `<a href="methodology.html">methodology &rarr;</a> · ${RECORDS.length.toLocaleString()} leads · generated ${ts}`;
+    document.getElementById("footerMeta").innerHTML =
+      ` · Last updated: ${ts}` + (commit ? ` · Source commit: ${commit}` : "");
+    buildHeader();
     render();
   } catch (e) {
     document.getElementById("tbody").innerHTML =
-      `<tr><td colspan="8" class="empty">Failed to load leads.json: ${escape(String(e))}</td></tr>`;
+      `<tr><td colspan="9" class="empty">Failed to load data/leads.json: ${escape(String(e))}</td></tr>`;
     document.getElementById("meta").textContent = "load failed";
   }
 }

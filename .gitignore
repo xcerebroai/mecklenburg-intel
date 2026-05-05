@@ -1,0 +1,36 @@
+# Raw scraped data — never committed
+data/raw/
+*.jsonl
+*.log
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+.claude/
+
+# Large files (>50MB GitHub limit)
+*.zip
+*.gz
+data/*.csv
+data/*.xlsx
+!data/.gitkeep

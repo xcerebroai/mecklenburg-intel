@@ -12,6 +12,7 @@ graceful Ctrl+C. Joins, normalization, scoring all happen in
 | `tax_delinquent.py` | Kania Law Firm + RBCWB tax foreclosure listings | `tax_delinquent.jsonl` | full snapshot |
 | `foreclosures.py` | mecktimes.com legal notices (real estate) | `foreclosures.jsonl` | `detail_id` dedup |
 | `estates.py` | mecktimes.com legal notices (probate) | `estates.jsonl` | `detail_id` dedup |
+| `rod.py` | Register of Deeds — CSV importer (live scrape blocked) | `rod_<doctype>.jsonl` | per-doctype snapshot |
 
 Run any scraper with `--limit N` to cap the rows fetched in one run (handy for
 schema verification). Run with `--reset` to clear the output and checkpoint
@@ -51,6 +52,47 @@ case filing — that's the higher-signal subset anyway. To pick up early-stage
 delinquents (delinquent but not yet in foreclosure), parse the annual PDF
 separately when it's published; output to `data/raw/tax_delinquent_pdf.jsonl`
 and the pipeline will pick it up.
+
+### Register of Deeds (Aumentum / Manatron) — login wall
+
+`meckrod.manatron.com` is the canonical Register of Deeds search. Phase 3
+reconnaissance confirmed:
+
+- The homepage IS the login modal. There is no public/anonymous search.
+- Every search path (`/SearchByName`, `/SearchByDate`, `/SearchByDocType`,
+  `/RealEstate*`, `/oncoredetails`, `/Search/SearchEntry`) returns a
+  238-byte "Session state is not available" stub if hit unauthenticated.
+- The platform is HartIC.WebUI on IIS 10 — Hart InterCivic / Manatron
+  Aumentum. Login is ASP.NET WebForms with a ~9KB `__VIEWSTATE` and
+  `__EVENTVALIDATION` token that change per session.
+- The form has `rdoPubCpu` / `rdoPvtCpu` radios but those are
+  public/private *computer* flags (session security), not guest access.
+- Default `guest`/`guest` credentials fail the form validators with
+  "*Required!" — the platform is configured for paid subscribers only.
+- `https://www.meckrodhistorical.com/` is open but pre-1990 only.
+- `https://deeds.mecknc.gov/` is informational (no live search).
+
+**Tonight's resolution: `scrapers/rod.py` ships in CSV-import mode
+(Approach 3).** A logged-in user (or future Playwright session with
+persisted cookies) exports a CSV from Aumentum's search results, drops it
+in `data/raw/`, and runs `rod.py import --csv ... --doctype ...` to
+normalize it to JSONL. The pipeline picks it up automatically — no
+build_leads.py change required when new files arrive.
+
+The pipeline runs **without** ROD data and emits a working leads.json
+just fine; it simply can't fire the `lien` (judgment / mechanics) or full
+`transfer` (quitclaim) signals that ROD data unlocks. A partial `transfer`
+heuristic fires from POLARIS sale data alone (recent sale + nominal
+consideration / post-decedent sale).
+
+**Future paths to live scrape:**
+1. Acquire Aumentum credentials (subscription or free public account if
+   Mecklenburg ever exposes one) and drive Playwright with persistent
+   cookies.
+2. Move the ROD scraper to a self-hosted residential-IP runner that can
+   hold a long-lived session and survive the platform's session-state
+   timeouts.
+3. File a public-records request for bulk monthly extracts (NCGS Ch. 132).
 
 ### eCourts Portal (Tyler Odyssey) — CAPTCHA
 

@@ -11,8 +11,8 @@ RECON.md 6-pattern stack:
   tax       Tax distress — Kania/RBCWB filing or "Mecklenburg County v X"
   estate    Probate — newspaper Notice to Creditors → owner-name match
   code      Code violation / demolition order — open Charlotte case
-  lien      HOA lien / civil judgment converted to real-property lien
-  transfer  Distressed conveyance — not yet wired (needs ROD data)
+  lien      HOA lien / civil judgment / mechanics lien / lis pendens
+  transfer  Distressed conveyance — quitclaim, post-decedent sale, nominal price
 
 Tier comes from STACK DEPTH (count of distinct patterns), not score sum.
 This is non-negotiable per FRAMEWORK_SPEC §3 — score inflation is the
@@ -50,6 +50,16 @@ FORECLOSURE_PATH = RAW_DIR / "foreclosures.jsonl"
 ESTATE_PATH = RAW_DIR / "estates.jsonl"
 CODE_CASES_PATH = RAW_DIR / "code_violations_cases_all.jsonl"
 CODE_DEMO_PATH = RAW_DIR / "code_violations_orders_to_demolish.jsonl"
+
+# ROD per-doctype JSONL — all optional; pipeline runs fine when missing.
+ROD_DOT_PATH = RAW_DIR / "rod_dot.jsonl"
+ROD_ASGN_PATH = RAW_DIR / "rod_asgn.jsonl"
+ROD_SUBTRUSTEE_PATH = RAW_DIR / "rod_sub_trustee.jsonl"
+ROD_JUDGMENT_PATH = RAW_DIR / "rod_judgment.jsonl"
+ROD_MECHANICS_LIEN_PATH = RAW_DIR / "rod_mechanics_lien.jsonl"
+ROD_QUITCLAIM_PATH = RAW_DIR / "rod_quitclaim.jsonl"
+ROD_LIS_PENDENS_PATH = RAW_DIR / "rod_lis_pendens.jsonl"
+ROD_SATISFACTION_PATH = RAW_DIR / "rod_satisfaction.jsonl"
 
 PATTERNS = ["jfc", "tax", "estate", "code", "lien", "transfer"]
 TIER_HOT = "hot"
@@ -288,6 +298,133 @@ def detect_jfc_or_tax(record: dict) -> str:
     return "jfc"
 
 
+def _rod_pid(row: dict) -> str:
+    """ROD rows carry `pid` already-normalized by rod.py; tolerate variants."""
+    pid = (row.get("pid") or row.get("parcel_id") or row.get("ParcelId") or "").strip()
+    digits = re.sub(r"\D", "", pid)
+    return digits.zfill(8) if 0 < len(digits) <= 8 else digits
+
+
+def _attach_rod_lien(leads_get_lead, polaris_by_pid: dict, rows: list, source_label: str) -> tuple[int, int]:
+    """ROD judgment / mechanics_lien / lis_pendens → `lien` pattern."""
+    attached = unmatched = 0
+    for r in rows:
+        pid = _rod_pid(r)
+        if not pid or pid not in polaris_by_pid:
+            unmatched += 1
+            continue
+        lead = leads_get_lead(pid)
+        lead["patterns"].add("lien")
+        lead["signals"]["lien"].append({
+            "source": source_label,
+            "doc_type": r.get("doc_type") or source_label,
+            "instrument_id": r.get("instrument_id"),
+            "book": r.get("book"), "page": r.get("page"),
+            "recorded_date": r.get("recorded_date"),
+            "grantor": r.get("grantor"), "grantee": r.get("grantee"),
+            "amount": r.get("amount"),
+        })
+        attached += 1
+    return attached, unmatched
+
+
+def _attach_rod_transfer(leads_get_lead, polaris_by_pid: dict, rows: list) -> tuple[int, int]:
+    """ROD quitclaim → `transfer` pattern."""
+    attached = unmatched = 0
+    for r in rows:
+        pid = _rod_pid(r)
+        if not pid or pid not in polaris_by_pid:
+            unmatched += 1
+            continue
+        lead = leads_get_lead(pid)
+        lead["patterns"].add("transfer")
+        lead["signals"]["transfer"].append({
+            "source": "rod_quitclaim",
+            "doc_type": r.get("doc_type") or "QUITCLAIM",
+            "instrument_id": r.get("instrument_id"),
+            "book": r.get("book"), "page": r.get("page"),
+            "recorded_date": r.get("recorded_date"),
+            "grantor": r.get("grantor"), "grantee": r.get("grantee"),
+        })
+        attached += 1
+    return attached, unmatched
+
+
+def _attach_rod_dot_or_subtrustee(leads_get_lead, polaris_by_pid: dict, rows: list,
+                                   doc_label: str, sub_flag: str) -> tuple[int, int]:
+    """ROD DOT / Sub Trustee — strengthens `jfc` and adds a sub-flag, but does
+    NOT independently fire `jfc` (a DOT alone isn't distress; the foreclosure
+    notice does that)."""
+    attached = unmatched = 0
+    for r in rows:
+        pid = _rod_pid(r)
+        if not pid or pid not in polaris_by_pid:
+            unmatched += 1
+            continue
+        lead = leads_get_lead(pid)
+        if doc_label == "sub_trustee":
+            lead["patterns"].add("jfc")
+        lead["signals"]["jfc"].append({
+            "source": f"rod_{doc_label}",
+            "doc_type": r.get("doc_type") or doc_label.upper(),
+            "instrument_id": r.get("instrument_id"),
+            "book": r.get("book"), "page": r.get("page"),
+            "recorded_date": r.get("recorded_date"),
+            "grantor": r.get("grantor"), "grantee": r.get("grantee"),
+        })
+        lead["flags"].append(sub_flag)
+        attached += 1
+    return attached, unmatched
+
+
+def _polaris_transfer_signal(parcel: dict, has_estate: bool) -> tuple[bool, list[str]]:
+    """Detect transfer-pattern signal from POLARIS data alone.
+
+    Three sub-rules — any one fires the pattern:
+      A. Recent sale (within ~24mo) at nominal consideration (price < $1k OR
+         price < 5% of total market value) — common in heirship deeds and
+         deed-in-lieu-of-foreclosure.
+      B. Estate notice on the same parcel + sale_date within 24mo — captures
+         the heirs-property-workout pattern.
+      C. Empty grantor (POLARIS sometimes flags non-arms-length transfers
+         this way) on a recent sale.
+    """
+    flags: list[str] = []
+    sale_date = parcel.get("sale_date")
+    sale_price = parcel.get("sale_price")
+    total_value = parcel.get("total_market_value") or parcel.get("total_value")
+    fired = False
+    # Parse sale_date — POLARIS dates come as ms epoch from ArcGIS export.
+    # Some rows carry stale/invalid epochs (negative, ~0, or absurdly large)
+    # which raise OSError on Windows; coerce all of those to "no date".
+    sale_dt = None
+    if sale_date is not None and sale_date != "":
+        try:
+            ms = int(float(sale_date))
+            if 0 < ms < 4_102_444_800_000:  # 0 < t < year 2100 (ms)
+                sale_dt = datetime.fromtimestamp(ms / 1000, tz=timezone.utc)
+        except (TypeError, ValueError, OSError, OverflowError):
+            sale_dt = None
+    now = datetime.now(timezone.utc)
+    recent = bool(sale_dt) and (now - sale_dt).days <= 730
+    try:
+        sp = float(sale_price) if sale_price is not None else None
+    except (TypeError, ValueError):
+        sp = None
+    try:
+        tv = float(total_value) if total_value is not None else None
+    except (TypeError, ValueError):
+        tv = None
+    if recent and sp is not None:
+        if sp < 1000 or (tv and tv > 0 and sp / tv < 0.05):
+            flags.append("nominal_consideration_recent_sale")
+            fired = True
+    if recent and has_estate:
+        flags.append("post_estate_recent_sale")
+        fired = True
+    return fired, flags
+
+
 def join_signals(
     polaris_by_pid: dict,
     by_addr_key: dict,
@@ -297,6 +434,14 @@ def join_signals(
     estate_rows: list,
     code_cases: list,
     code_demos: list,
+    rod_judgment: list,
+    rod_mechanics: list,
+    rod_lis_pendens: list,
+    rod_quitclaim: list,
+    rod_dot: list,
+    rod_asgn: list,
+    rod_subtrustee: list,
+    rod_satisfaction: list,
     log,
 ) -> dict[str, dict]:
     """Walk all signal rows, attach to PIDs. Returns pid -> {patterns, signals}."""
@@ -444,6 +589,54 @@ def join_signals(
         lead["flags"].append("demolition_order")
         demo_attached += 1
     log(f"[code:demos] attached={demo_attached}")
+
+    # ---- ROD signals ---------------------------------------------------
+    # Each is no-op when the corresponding rod_*.jsonl file isn't present,
+    # so the pipeline runs cleanly without any ROD data at all.
+    a, u = _attach_rod_lien(get_lead, polaris_by_pid, rod_judgment, "judgment")
+    log(f"[rod:judgment] attached={a} unmatched={u}")
+    a, u = _attach_rod_lien(get_lead, polaris_by_pid, rod_mechanics, "mechanics_lien")
+    log(f"[rod:mechanics_lien] attached={a} unmatched={u}")
+    a, u = _attach_rod_lien(get_lead, polaris_by_pid, rod_lis_pendens, "lis_pendens")
+    log(f"[rod:lis_pendens] attached={a} unmatched={u}")
+    a, u = _attach_rod_transfer(get_lead, polaris_by_pid, rod_quitclaim)
+    log(f"[rod:quitclaim] attached={a} unmatched={u}")
+    a, u = _attach_rod_dot_or_subtrustee(get_lead, polaris_by_pid, rod_dot, "dot", "rod_dot_present")
+    log(f"[rod:dot] attached={a} unmatched={u}")
+    a, u = _attach_rod_dot_or_subtrustee(get_lead, polaris_by_pid, rod_asgn, "asgn", "rod_servicer_change")
+    log(f"[rod:asgn] attached={a} unmatched={u}")
+    a, u = _attach_rod_dot_or_subtrustee(get_lead, polaris_by_pid, rod_subtrustee, "sub_trustee", "rod_substitute_trustee")
+    log(f"[rod:sub_trustee] attached={a} unmatched={u}")
+    # Satisfactions net out closed liens — sub-flag only, no pattern.
+    sat_attached = 0
+    for r in rod_satisfaction:
+        pid = _rod_pid(r)
+        if not pid or pid not in polaris_by_pid:
+            continue
+        get_lead(pid)["flags"].append("rod_satisfaction_filed")
+        sat_attached += 1
+    log(f"[rod:satisfaction] attached={sat_attached}")
+
+    # POLARIS-derived transfer signal (works without ROD): nominal-consideration
+    # recent sale OR post-decedent recent sale.
+    poll_transfer = 0
+    for pid, lead in list(leads.items()):
+        parcel = polaris_by_pid.get(pid)
+        if not parcel:
+            continue
+        has_estate = "estate" in lead["patterns"]
+        fired, sub_flags = _polaris_transfer_signal(parcel, has_estate)
+        if fired:
+            lead["patterns"].add("transfer")
+            lead["flags"].extend(sub_flags)
+            lead["signals"]["transfer"].append({
+                "source": "polaris_sale",
+                "sale_date_ms": parcel.get("sale_date"),
+                "sale_price": parcel.get("sale_price"),
+                "total_market_value": parcel.get("total_market_value"),
+            })
+            poll_transfer += 1
+    log(f"[polaris:transfer] fired={poll_transfer}")
 
     return leads
 
@@ -635,10 +828,28 @@ def main() -> int:
     est = load_jsonl(ESTATE_PATH)
     code_cases = load_jsonl(CODE_CASES_PATH)
     code_demos = load_jsonl(CODE_DEMO_PATH)
+    rod_judgment = load_jsonl(ROD_JUDGMENT_PATH)
+    rod_mechanics = load_jsonl(ROD_MECHANICS_LIEN_PATH)
+    rod_lis_pendens = load_jsonl(ROD_LIS_PENDENS_PATH)
+    rod_quitclaim = load_jsonl(ROD_QUITCLAIM_PATH)
+    rod_dot = load_jsonl(ROD_DOT_PATH)
+    rod_asgn = load_jsonl(ROD_ASGN_PATH)
+    rod_subtrustee = load_jsonl(ROD_SUBTRUSTEE_PATH)
+    rod_satisfaction = load_jsonl(ROD_SATISFACTION_PATH)
     log(f"[load] tax={len(tax):,}  foreclosures={len(fc):,}  "
         f"estates={len(est):,}  code_cases={len(code_cases):,}  code_demos={len(code_demos):,}")
+    log(f"[load:rod] judgment={len(rod_judgment)}  mechanics={len(rod_mechanics)}  "
+        f"lis_pendens={len(rod_lis_pendens)}  quitclaim={len(rod_quitclaim)}  "
+        f"dot={len(rod_dot)}  asgn={len(rod_asgn)}  sub_trustee={len(rod_subtrustee)}  "
+        f"satisfaction={len(rod_satisfaction)}")
 
-    leads = join_signals(polaris_by_pid, by_addr, by_owner, tax, fc, est, code_cases, code_demos, log)
+    leads = join_signals(
+        polaris_by_pid, by_addr, by_owner,
+        tax, fc, est, code_cases, code_demos,
+        rod_judgment, rod_mechanics, rod_lis_pendens, rod_quitclaim,
+        rod_dot, rod_asgn, rod_subtrustee, rod_satisfaction,
+        log,
+    )
     log(f"[join] {len(leads):,} parcels with at least one signal")
 
     if args.dry_run > 0:

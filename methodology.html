@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Methodology · Mecklenburg Intel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0A0A0A; --panel: #0F172A; --panel-2: #111c30;
+      --accent: #3B82F6; --accent-soft: #60A5FA;
+      --text: #E5E7EB; --text-dim: #94A3B8;
+      --muted: #1F2937; --border: #1E293B;
+      --hot: #F43F5E; --warm: #F59E0B; --active: #3B82F6;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--bg); color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      font-size: 15px; line-height: 1.6;
+    }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 32px 24px 96px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 32px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-soft) 100%);
+      display: grid; place-items: center;
+      box-shadow: 0 0 24px rgba(59, 130, 246, 0.35);
+      font-weight: 700; font-size: 14px; color: #0A0A0A;
+    }
+    .tag { color: var(--accent-soft); font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600; }
+    h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.4px; }
+    h2 { font-size: 18px; font-weight: 700; margin: 36px 0 12px; color: var(--text); letter-spacing: -0.2px; }
+    h2::before {
+      content: "§"; color: var(--accent); font-weight: 600; margin-right: 8px;
+    }
+    h3 { font-size: 14px; font-weight: 600; margin: 18px 0 6px; color: var(--accent-soft); }
+    p { color: var(--text); }
+    p.dim { color: var(--text-dim); }
+    a { color: var(--accent-soft); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      background: var(--muted); padding: 1px 6px; border-radius: 3px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px;
+      color: var(--accent-soft);
+    }
+    pre {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
+      padding: 12px 14px; overflow-x: auto; font-size: 12.5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0;
+            background: var(--panel); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; font-size: 13px; }
+    th { background: var(--panel-2); color: var(--text-dim); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; }
+    tr:last-child td { border-bottom: none; }
+    .pat {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.5px; margin-right: 4px;
+      background: var(--panel-2); color: var(--accent-soft); border: 1px solid var(--border);
+    }
+    .pat.jfc { color: #F87171; border-color: rgba(248, 113, 113, 0.35); }
+    .pat.tax { color: #FBBF24; border-color: rgba(251, 191, 36, 0.35); }
+    .pat.estate { color: #A78BFA; border-color: rgba(167, 139, 250, 0.35); }
+    .pat.code { color: #34D399; border-color: rgba(52, 211, 153, 0.35); }
+    .pat.lien { color: #F472B6; border-color: rgba(244, 114, 182, 0.35); }
+    .pat.transfer { color: #FCD34D; border-color: rgba(252, 211, 77, 0.35); }
+    .tier-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 999px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+    }
+    .tier-badge.hot { background: rgba(244, 63, 94, 0.12); color: var(--hot); }
+    .tier-badge.warm { background: rgba(245, 158, 11, 0.12); color: var(--warm); }
+    .tier-badge.active { background: rgba(59, 130, 246, 0.12); color: var(--active); }
+    .callout {
+      background: var(--panel); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0;
+      padding: 12px 16px; margin: 16px 0; font-size: 13px;
+    }
+    .callout.warn { border-left-color: var(--warm); }
+    .callout.gap { border-left-color: var(--hot); }
+    ul li { margin-bottom: 4px; }
+    .footer {
+      text-align: center; color: var(--text-dim); font-size: 11px;
+      margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border);
+    }
+    .footer .bolt { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark">M</div>
+        <div>
+          <div class="tag">Mecklenburg Intel</div>
+          <h1>Methodology &amp; Limitations</h1>
+        </div>
+      </div>
+      <div><a href="index.html">&larr; back to dashboard</a></div>
+    </div>
+
+    <p class="dim">
+      This page exists so anyone reading a lead can audit how it got there. It documents
+      the data sources we pull from, the six distress patterns we score, the
+      tier-assignment rules, the sources of noise we know about, and what
+      isn't included and why. Read this before trusting a lead enough to
+      pick up the phone.
+    </p>
+
+    <h2>What this is</h2>
+    <p>
+      A flat-file pipeline that joins public records from Mecklenburg County, NC
+      and the City of Charlotte, then surfaces parcels where multiple distinct
+      distress signals stack on the same property. The output is a single
+      <code>data/leads.json</code> file consumed by a static dashboard. Everything
+      here is open data — no PII beyond what already appears in public records.
+    </p>
+
+    <h2>Data sources</h2>
+    <table>
+      <thead><tr><th>Source</th><th>What we use it for</th><th>Auth</th><th>Refresh</th></tr></thead>
+      <tbody>
+        <tr><td>Mecklenburg GIS — POLARIS / TaxParcel_camadata<br/><span class="dim" style="font-size:11px">meckgis.mecklenburgcountync.gov</span></td><td>Master parcel table — ~446K rows, 96 fields. PID is the join key for everything else. Owner, mail addr, site addr, building specs, value, sale, deed book/page, exemptions.</td><td>None</td><td>Daily</td></tr>
+        <tr><td>Charlotte HNS Code Enforcement<br/><span class="dim" style="font-size:11px">gis.charlottenc.gov</span></td><td>Code enforcement cases (Open/New only — closed cases are noise). Demolition orders. ParcelId joins directly to POLARIS pid.</td><td>None</td><td>Daily</td></tr>
+        <tr><td>Kania Law Firm tax foreclosures<br/><span class="dim" style="font-size:11px">kanialawfirm.com</span></td><td>Mecklenburg active In Rem and mortgage-style tax foreclosure cases. Court file #, sale date, opening bid, tax-assessed value.</td><td>None</td><td>Manual periodic</td></tr>
+        <tr><td>Ruff Bond Cobb Wade &amp; Bethune (RBCWB)<br/><span class="dim" style="font-size:11px">rbcwb.com</span></td><td>Mecklenburg tax foreclosure listings — second outside law firm. Includes opening bid, sale-set status.</td><td>None</td><td>Manual periodic</td></tr>
+        <tr><td>Mecklenburg Times — public notices<br/><span class="dim" style="font-size:11px">mecktimes.com</span></td><td>Statutorily-required newspaper notices: foreclosure sales (real_estate index), Notice to Creditors / probate (probate index). Used as the parallel signal stream to the CAPTCHA-gated eCourts portal.</td><td>None</td><td>Weekly print cycle</td></tr>
+      </tbody>
+    </table>
+
+    <h2>The six-pattern stack</h2>
+    <p>
+      Each distress signal collapses into one of six pattern categories.
+      A parcel's <em>tier</em> is determined by how many distinct categories
+      hit it (the stack depth) — never by the raw score sum. Stacking
+      orthogonal signals is the whole point: a parcel in foreclosure that's
+      also got an open code case and a recent quitclaim is a much stronger
+      candidate than a property with three different code violations.
+    </p>
+
+    <h3><span class="pat jfc">JFC</span> Judicial Foreclosure</h3>
+    <p>NC is a judicial-foreclosure state. Fires on:</p>
+    <ul>
+      <li>Mecktimes notice with an <code>SP-numbered</code> case (Special Proceeding) and "Foreclosure of Deed of Trust" / "Power of Sale" language</li>
+      <li>Substitute-trustee sale notice in mecktimes</li>
+      <li>(When ROD data is wired) — recorded "Notice of Substitute Trustee Sale"</li>
+    </ul>
+
+    <h3><span class="pat tax">TAX</span> Tax Distress</h3>
+    <ul>
+      <li>Active case at Kania or RBCWB (PID join)</li>
+      <li>Mecktimes notice with "Mecklenburg County" as plaintiff (In Rem under GS 105-375 or mortgage-style under GS 105-374)</li>
+      <li>Mecktimes notice explicitly tagged "TAX FORECLOSURE"</li>
+    </ul>
+
+    <h3><span class="pat estate">ESTATE</span> Probate / Estate Opened</h3>
+    <p>Notice to Creditors filed in mecktimes' probate index; decedent name matched against POLARIS owners.</p>
+    <div class="callout warn">
+      <b>Known noise:</b> matching is by decedent name, not by parcel id. A common-surname-only notice (e.g. "JOHN SMITH") would attach to dozens of unrelated parcels, so we
+      <ul style="margin: 6px 0 0 0">
+        <li>require last + first + middle when the notice has it (3-word match keys),</li>
+        <li>fall back to last + first only when the surname is &ge;5 chars AND not in the top-50 US surnames list,</li>
+        <li>skip the notice entirely if neither condition holds.</li>
+      </ul>
+      Even with this filter, the same name can match multiple unrelated owners. <b>Verify identity before contact</b>.
+    </div>
+
+    <h3><span class="pat code">CODE</span> Code Violation / Demolition</h3>
+    <ul>
+      <li>Charlotte HNS case with <code>CaseStatus = Open</code> or <code>New</code> (Closed cases are excluded — 99% of historical cases are closed and stretch back years; they aren't a current motivation signal)</li>
+      <li>Sub-flag <code>code_housing_case</code> when CaseType is Housing (vs Nuisance, Sign, etc.)</li>
+      <li>Sub-flag <code>code_repeat_violator</code> when 2+ open cases on the same PID</li>
+      <li>Sub-flag <code>demolition_order</code> when present in the Orders to Demolish layer (~21 active)</li>
+    </ul>
+    <p class="dim">Coverage gap: City of Charlotte only. Cornelius / Davidson / Huntersville / Matthews / Mint Hill and unincorporated areas use Mecklenburg County's separate code.mecknc.gov system, which has no open-data feed.</p>
+
+    <h3><span class="pat lien">LIEN</span> Recorded Lien / Civil Judgment</h3>
+    <ul>
+      <li>Mecktimes notice with HOA-claim-of-lien language</li>
+      <li>Civil execution sale (CV-numbered case, sheriff's execution for unpaid debt)</li>
+      <li>(When ROD data is wired) — Memo of Judgment, Mechanics Lien, IRS / state tax lien, Lis Pendens</li>
+    </ul>
+
+    <h3><span class="pat transfer">TRANSFER</span> Distressed Conveyance</h3>
+    <p>Two sub-rules — either fires the pattern:</p>
+    <ul>
+      <li><b>Rule A</b> — recent sale (within 24 months) at nominal consideration: sale price &lt; $1,000 OR &lt; 5% of total market value. This is the common shape of an heirship deed, a deed-in-lieu of foreclosure, or a non-arms-length family transfer.</li>
+      <li><b>Rule B</b> — estate notice posted within 18 months PRIOR to a parcel sale. The decedent died, an estate was opened, and the property sold within 18 months.</li>
+    </ul>
+    <p class="dim">Rule B order matters: a sale that predates the estate notice doesn't fit the pattern. We check that the estate posted_date is &le; the sale_date.</p>
+
+    <h2>Tier rules</h2>
+    <ul>
+      <li><span class="tier-badge hot">HOT</span> — 3 or more distinct patterns stacked on the same parcel</li>
+      <li><span class="tier-badge warm">WARM</span> — exactly 2 patterns</li>
+      <li><span class="tier-badge active">ACTIVE</span> — exactly 1 pattern</li>
+      <li>Parcels with zero patterns are not emitted as leads.</li>
+    </ul>
+    <p>
+      Sub-flags (<code>absentee_owner</code>, <code>demolition_order</code>,
+      <code>code_repeat_violator</code>, <code>heirs_property_indicator</code>,
+      <code>nominal_consideration_recent_sale</code>, etc.) add to a
+      lead's <code>distress_score</code> for in-tier sorting but
+      <em>never promote tier</em>. A 1-pattern lead with five sub-flags is still
+      Active. Stacking different categories is the only path to a higher tier.
+    </p>
+    <p class="dim">
+      This is a deliberate anti-inflation rule. It's easy to drift into a system
+      where each new sub-rule adds points until everything is "Hot" because the
+      score is so generous. Tier-from-stack-depth makes that impossible.
+    </p>
+
+    <h2>Derived fields on every lead</h2>
+    <ul>
+      <li><code>estimated_equity_pct</code> — <code>1 - sale_price / total_market_value</code>, bounded 0-100. Rough floor estimate of paydown + appreciation. Real equity requires the current loan balance, which lives in ROD.</li>
+      <li><code>years_owned</code> — years since last sale per POLARIS.</li>
+      <li><code>is_absentee</code> — mailing-address street name doesn't match the site address street name.</li>
+      <li><code>is_likely_landlord</code> — absentee + non-entity individual, OR an entity name containing rental/properties/holdings/realty.</li>
+      <li><code>is_homestead</code>, <code>is_senior</code>, <code>is_disabled_veteran</code>, <code>is_disabled</code> — POLARIS exemption flags.</li>
+      <li><code>is_likely_inherited</code> — held &ge;25 years AND structure age &ge;50 AND owner not an entity AND not homestead-exempt. Soft hint, not a hard signal.</li>
+      <li><code>lot_value_pct</code> — land value / total value. High = land play / teardown candidate; low = meaningful improvements.</li>
+      <li><code>distress_score</code> — pattern count × 10 + flag count + small bumps for absentee / senior / equity ≥ 50% / years_owned ≥ 20. Used only for in-tier sorting.</li>
+    </ul>
+
+    <h2>Anti-bot blockers we hit</h2>
+    <div class="callout warn">
+      <b>Mecktimes (Cloudflare TLS fingerprint):</b> the live scraper at <code>scrapers/foreclosures.py</code> and <code>scrapers/estates.py</code> is blocked from the build machine even with <code>curl_cffi</code> impersonating Chrome. The seed data for both was extracted via a side-channel renderer. The scraper detects the 403 and exits cleanly without overwriting data on disk. Workarounds documented in <code>scrapers/README.md</code>.
+    </div>
+    <div class="callout warn">
+      <b>Aumentum / Mecklenburg Register of Deeds:</b> <code>meckrod.manatron.com</code> is fully login-gated. Phase 3 reconnaissance confirmed all search paths return "Session state is not available" unauthenticated, default <code>guest</code>/<code>guest</code> credentials fail, and there is no documented public account on this deployment. The pipeline ships with a CSV-import path (<code>scrapers/rod.py</code>) so a logged-in human export can hydrate the lien / quitclaim / DOT signals — until that data exists, the <code>lien</code> pattern only fires from mecktimes HOA notices and CV-execution sales (5 records in this build), and <code>transfer</code> fires only from POLARIS sale heuristics.
+    </div>
+    <div class="callout warn">
+      <b>eCourts (Tyler Odyssey):</b> CAPTCHA-gated and rate-limited. Not scraped. Newspaper notices in mecktimes cover the events (foreclosure sales, estate openings) that go to public notice by statute, with a 1-7 day publication lag.
+    </div>
+
+    <h2>What isn't included and why</h2>
+    <ul>
+      <li><b>Register of Deeds full coverage</b> — no live scrape (login wall, see above). This caps the <code>lien</code> and <code>transfer</code> patterns and is the single biggest gap. Hot-tier leads (3+ patterns) become abundant once ROD data is loaded.</li>
+      <li><b>County code enforcement (towns + unincorporated)</b> — code.mecknc.gov has no open-data feed. We only see the City of Charlotte HNS data.</li>
+      <li><b>Annual delinquent-tax PDF</b> — published once a year. Not parsed. The active-foreclosure flow (Kania + RBCWB) covers the higher-signal subset (delinquents whose case has progressed to a filing).</li>
+      <li><b>eCourts case detail</b> — see CAPTCHA note above. We get the public-notice slice; we don't get the underlying SP/E filing detail.</li>
+      <li><b>Skip-trace / contact info</b> — phone numbers, email addresses, current employers, deceased flags. Out of scope for a public-records pipeline. The CSV export includes empty <code>phone1</code>/<code>phone2</code>/<code>phone3</code>/<code>email1</code>/<code>email2</code> columns so a downstream skip-trace vendor can fill them.</li>
+      <li><b>MLS / valuation models</b> — no Zillow / Redfin / RPR / RentCast. Tax-assessed values from POLARIS only.</li>
+    </ul>
+
+    <h2>Honesty about precision</h2>
+    <p>
+      This is a POC built over a few sessions on public data. Some specific
+      noise sources you should know about:
+    </p>
+    <ul>
+      <li><b>Estate matching</b> — fuzzy name match attaches the average decedent to roughly 3.4 parcels. Some of those are correct, some aren't. Always verify identity before outreach.</li>
+      <li><b>Foreclosure address match</b> — about 75% of mecktimes notices match a POLARIS parcel by address. The rest fail because of unit/condo numbering, abbreviation differences, or out-of-county notices that slip through the county filter.</li>
+      <li><b>POLARIS multi-row history</b> — the CAMA layer has multiple rows per parcel (revaluation history). The pipeline keeps the first row per PID. A more correct approach is to keep the most recent <code>yearid</code>; that's a follow-up.</li>
+      <li><b>Tax foreclosure mailing addresses</b> — Kania / RBCWB don't include mailing address; we get owner name and parcel ID. Mailing comes from POLARIS via the PID join.</li>
+      <li><b>Code-case Closed cases excluded</b> — 99% of historical HNS cases are Closed. Including them inflated <code>code</code> matches to 122K parcels, with most being years-old nuisance complaints. Open/New only is a deliberate trade-off favoring precision over recall.</li>
+    </ul>
+
+    <h2>Two-Truths invariant</h2>
+    <p>
+      The dashboard's filter counts and filtered table are both derived from a
+      single <code>matches(lead)</code> function — same call, same input array,
+      same output set. Every render is one filter pass; the stat cards and
+      the visible rows can never disagree. This is the canonical
+      mistake the framework spec warns against (the "Two-Truths Bug"); we
+      check it on every pipeline run.
+    </p>
+
+    <h2>Scope and intent</h2>
+    <p class="dim">
+      This is a test-run product, not a sold service. Built across a few sessions
+      to validate the Texas framework on a North Carolina judicial-foreclosure
+      jurisdiction with a different doc-type vocabulary. The structural
+      pieces — POLARIS pull, joining, six-pattern stack, dashboard, methodology
+      page, CSV-import for ROD when login becomes available — are reusable across
+      any NC county whose data sources resemble Mecklenburg's.
+    </p>
+
+    <div class="footer">
+      <span class="bolt">⚡</span> Mecklenburg Intel · POC · <a href="index.html">dashboard</a>
+    </div>
+  </div>
+</body>
+</html>

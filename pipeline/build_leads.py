@@ -118,12 +118,12 @@ def normalize_owner(name: str) -> str:
 
 
 def owner_keys(normalized: str) -> list[str]:
-    """Build keys for fuzzy owner matching.
+    """Build keys for fuzzy owner matching — used to INDEX POLARIS owners.
 
-    Single-word keys are unsafe — "JOHN" hits thousands of parcels. Require at
-    least 2 words and at least 8 characters of total signal. Newspaper notices
-    publish names "Last, First Middle"; POLARIS stores them in two fields
-    (ownrlstnme + ownrfrstnme), so we emit both LAST_FIRST and FIRST_LAST.
+    We emit:
+      - 3-word LAST FIRST MIDDLE (and FIRST MIDDLE LAST) for high-precision joins
+      - 2-word LAST FIRST (and FIRST LAST) when total signal >= 8 chars
+      - never single-word keys ("JOHN" matches thousands of parcels)
     """
     parts = [p for p in normalized.split() if p]
     if len(parts) < 2:
@@ -135,10 +135,44 @@ def owner_keys(normalized: str) -> list[str]:
         keys.append(f"{b} {a}")
     if len(parts) >= 3:
         c = parts[2]
+        # 3-word keys
+        keys.append(f"{a} {b} {c}")
+        keys.append(f"{c} {b} {a}")
+        keys.append(f"{c} {a} {b}")
+        # extra 2-word combos with the third token
         if len(a) + len(c) >= 8:
             keys.append(f"{a} {c}")
             keys.append(f"{c} {a}")
     return keys
+
+
+def decedent_match_keys(decedent_normalized: str) -> list[str]:
+    """Build the ordered list of keys to try when matching an estate notice's
+    decedent name against POLARIS owner_keys. Tighter than owner_keys():
+
+      - 3-word: LAST FIRST MIDDLE  (high precision; preferred when available)
+      - 2-word: LAST FIRST or FIRST LAST, but only if last is NOT in the top-50
+        common-surnames list AND len(last) >= 5
+
+    Returns an empty list when the decedent name is too short to safely join.
+    """
+    parts = [p for p in decedent_normalized.split() if p]
+    if len(parts) < 2:
+        return []
+    keys: list[str] = []
+    if len(parts) >= 3:
+        # decedent in either canonical form
+        keys.append(" ".join(parts[:3]))
+        keys.append(f"{parts[2]} {parts[1]} {parts[0]}")
+        keys.append(f"{parts[-1]} {parts[0]} {parts[1]}")
+    # Last/first 2-word fallback — only if surname carries enough signal.
+    # When parts come in as [FIRST, MIDDLE, LAST] or [FIRST, LAST]:
+    last = parts[-1]
+    first = parts[0]
+    if len(last) >= 5 and last not in COMMON_SURNAMES:
+        keys.append(f"{first} {last}")
+        keys.append(f"{last} {first}")
+    return list(dict.fromkeys(keys))  # de-dupe, preserve order
 
 
 def normalize_street(street_full: str) -> tuple[str, str]:
@@ -210,35 +244,83 @@ def load_polaris(path: Path, log) -> tuple[dict, dict, dict]:
             )
             entry = {
                 "pid": pid,
+                "nc_pin": (r.get("nc_pin") or "").strip(),
                 "address": site_addr,
                 "street_num": (r.get("streetnumber") or "").strip(),
                 "street_name": (r.get("streetname") or "").strip(),
                 "loc_city": (r.get("loccity") or "").strip(),
                 "owner": owner,
+                "owner1_first": (r.get("ownrfrstnme") or "").strip(),
+                "owner1_last": (r.get("ownrlstnme") or "").strip(),
                 "owner2": owner2,
+                "owner2_first": (r.get("ownr2frstnme") or "").strip(),
+                "owner2_last": (r.get("ownr2lstnme") or "").strip(),
                 "mail_addr": mail_addr,
+                "mail_addr2": (r.get("mailaddr2") or "").strip(),
                 "mail_city": mail_city,
                 "mail_state": mail_state,
                 "mail_zip": mail_zip,
                 "absentee": absentee,
+                # Structure
                 "year_built": r.get("yearbuilt"),
+                "eff_year_built": r.get("effyearblt"),
+                "building_type": (r.get("bldgtype") or "").strip(),
+                "land_use": (r.get("landuse_description") or "").strip(),
+                "land_use_code": (r.get("lusecode") or "").strip(),
+                "grade": (r.get("grade") or "").strip(),
+                "story_height": (r.get("storyheight") or "").strip(),
+                "vacant_or_improved": (r.get("vacorimprov") or "").strip(),
+                "construction_frame": (r.get("frame") or "").strip(),
+                "exterior_wall": (r.get("extwall") or "").strip(),
+                "foundation": (r.get("foundation") or "").strip(),
+                "roof_cover": (r.get("roofcover") or "").strip(),
+                "heat": (r.get("heat") or "").strip(),
+                "heat_fuel": (r.get("heatfuel") or "").strip(),
+                "heated_area": r.get("heatedarea"),
+                "total_area": r.get("totalarea"),
+                "base_area": r.get("basearea"),
+                "finished_area": r.get("finarea"),
+                "garage_finished": r.get("fingarage"),
+                "garage_unfinished": r.get("unfingarag"),
+                "bedrooms": r.get("bedrooms"),
+                "fullbath": r.get("fullbath"),
+                "halfbath": r.get("halfbath"),
+                "three_qtr_bath": r.get("threequabath"),
+                "fireplaces": r.get("fireplaces"),
+                "residential_units": r.get("resunits"),
+                "commercial_units": r.get("comunits"),
+                # Land
+                "gis_acres": r.get("gisacres"),
+                "total_acres": r.get("totalac"),
+                "legal_acres": r.get("legalacres"),
+                # Value
                 "total_market_value": r.get("totmarkval"),
                 "total_value": r.get("totalvalue"),
                 "land_value": r.get("totlandval"),
                 "building_value": r.get("totalbldgval"),
-                "heated_area": r.get("heatedarea"),
-                "bedrooms": r.get("bedrooms"),
-                "fullbath": r.get("fullbath"),
-                "halfbath": r.get("halfbath"),
-                "land_use": r.get("landuse_description"),
-                "vacant_or_improved": r.get("vacorimprov"),
-                "exemption": r.get("exemption"),
+                "yard_value": r.get("totalyardval"),
+                # Sale
                 "sale_price": r.get("saleprice"),
                 "sale_date": r.get("saledate"),
-                "deed_book": r.get("deed_book"),
-                "deed_page": r.get("deed_page"),
-                "owner_type": r.get("ownertyped"),
-                "tax_district": r.get("taxmundist"),
+                "deed_type": (r.get("typeofdeed") or "").strip(),
+                "valid_sale": (r.get("validsale") or "").strip(),
+                "nal_desc": (r.get("naldesc") or "").strip(),
+                "deed_book": (r.get("deed_book") or "").strip(),
+                "deed_page": (r.get("deed_page") or "").strip(),
+                "grantor": (r.get("grantor") or "").strip(),
+                # Ownership classification
+                "owner_type": (r.get("ownertyped") or "").strip(),
+                "exemption": (r.get("exemption") or "").strip() if r.get("exemption") else "",
+                # Geography
+                "neighborhood": (r.get("neighborhood") or "").strip(),
+                "neighborhood_desc": (r.get("neighbordesc") or "").strip(),
+                "tax_district": (r.get("taxmundist") or "").strip(),
+                "tax_fire_district": (r.get("taxfiredist") or "").strip(),
+                "tax_special_district": (r.get("taxspecdist") or "").strip(),
+                "legal_desc": (r.get("legaldesc") or "").strip(),
+                # POLARIS x/y is encoded as (lat, lon) in CAMA — keep both as strings.
+                "x_coord": (r.get("xcoord") or "").strip(),
+                "y_coord": (r.get("ycoord") or "").strip(),
             }
             by_pid[pid] = entry
             num, name = normalize_street(site_addr)
@@ -377,51 +459,51 @@ def _attach_rod_dot_or_subtrustee(leads_get_lead, polaris_by_pid: dict, rows: li
     return attached, unmatched
 
 
-def _polaris_transfer_signal(parcel: dict, has_estate: bool) -> tuple[bool, list[str]]:
+def _polaris_transfer_signal(parcel: dict, estate_signals: list[dict]) -> tuple[bool, list[str]]:
     """Detect transfer-pattern signal from POLARIS data alone.
 
-    Three sub-rules — any one fires the pattern:
+    Two sub-rules — either fires the pattern:
       A. Recent sale (within ~24mo) at nominal consideration (price < $1k OR
          price < 5% of total market value) — common in heirship deeds and
          deed-in-lieu-of-foreclosure.
-      B. Estate notice on the same parcel + sale_date within 24mo — captures
-         the heirs-property-workout pattern.
-      C. Empty grantor (POLARIS sometimes flags non-arms-length transfers
-         this way) on a recent sale.
+      B. Estate notice posted within 18mo PRIOR to a parcel sale — i.e. the
+         decedent died, an estate was opened, and the property sold within
+         18 months. Order matters: a sale that predates the estate notice
+         doesn't fit this pattern.
     """
     flags: list[str] = []
-    sale_date = parcel.get("sale_date")
-    sale_price = parcel.get("sale_price")
-    total_value = parcel.get("total_market_value") or parcel.get("total_value")
-    fired = False
-    # Parse sale_date — POLARIS dates come as ms epoch from ArcGIS export.
-    # Some rows carry stale/invalid epochs (negative, ~0, or absurdly large)
-    # which raise OSError on Windows; coerce all of those to "no date".
-    sale_dt = None
-    if sale_date is not None and sale_date != "":
-        try:
-            ms = int(float(sale_date))
-            if 0 < ms < 4_102_444_800_000:  # 0 < t < year 2100 (ms)
-                sale_dt = datetime.fromtimestamp(ms / 1000, tz=timezone.utc)
-        except (TypeError, ValueError, OSError, OverflowError):
-            sale_dt = None
-    now = datetime.now(timezone.utc)
-    recent = bool(sale_dt) and (now - sale_dt).days <= 730
+    sale_dt = _ms_to_dt(parcel.get("sale_date"))
     try:
-        sp = float(sale_price) if sale_price is not None else None
+        sp = float(parcel.get("sale_price")) if parcel.get("sale_price") is not None else None
     except (TypeError, ValueError):
         sp = None
+    tv_raw = parcel.get("total_market_value") or parcel.get("total_value")
     try:
-        tv = float(total_value) if total_value is not None else None
+        tv = float(tv_raw) if tv_raw is not None else None
     except (TypeError, ValueError):
         tv = None
+    now = datetime.now(timezone.utc)
+    recent = bool(sale_dt) and (now - sale_dt).days <= 730
+    fired = False
+
+    # Rule A — recent + nominal
     if recent and sp is not None:
         if sp < 1000 or (tv and tv > 0 and sp / tv < 0.05):
             flags.append("nominal_consideration_recent_sale")
             fired = True
-    if recent and has_estate:
-        flags.append("post_estate_recent_sale")
-        fired = True
+
+    # Rule B — estate posted BEFORE sale, within 18mo of it
+    if sale_dt and estate_signals:
+        for sig in estate_signals:
+            est_dt = _parse_estate_posted(sig.get("posted") or sig.get("posted_date") or "")
+            if not est_dt:
+                continue
+            delta_days = (sale_dt - est_dt).days
+            if 0 <= delta_days <= 548:  # 18mo
+                flags.append("post_estate_recent_sale")
+                fired = True
+                break
+
     return fired, flags
 
 
@@ -510,17 +592,22 @@ def join_signals(
             fc_attached += 1
     log(f"[foreclosures] attached={fc_attached} unmatched={fc_unmatched} (no address match)")
 
-    # estates — owner-name fuzzy join
-    est_attached = est_unmatched = 0
+    # estates — decedent-name match using the *tighter* matcher than
+    # owner_keys: requires last+first+middle when available, or last+first
+    # only when last has >=5 chars and isn't in the top-50 common surnames.
+    est_attached = est_unmatched = est_skipped_unsafe = 0
     for r in estate_rows:
         if (r.get("county") or "").strip().lower() != "mecklenburg":
             continue
         decedent = r.get("decedent_name") or ""
         norm = normalize_owner(decedent)
+        keys = decedent_match_keys(norm)
+        if not keys:
+            est_skipped_unsafe += 1
+            continue
         candidate_pids: set[str] = set()
-        for k in owner_keys(norm):
-            if len(k) >= 4:
-                candidate_pids |= by_owner_key.get(k, set())
+        for k in keys:
+            candidate_pids |= by_owner_key.get(k, set())
         if not candidate_pids:
             est_unmatched += 1
             continue
@@ -535,7 +622,8 @@ def join_signals(
                 "url": r.get("detail_url"),
             })
             est_attached += 1
-    log(f"[estates] attached={est_attached} unmatched={est_unmatched} (no owner match)")
+    log(f"[estates] attached={est_attached} unmatched={est_unmatched} "
+        f"skipped_unsafe={est_skipped_unsafe} (notice too short / common-surname guard)")
 
     # code violations — direct PID join, only OPEN/NEW (closed cases are noise:
     # 99% of HNS rows are Closed and stretch back years).
@@ -617,15 +705,14 @@ def join_signals(
         sat_attached += 1
     log(f"[rod:satisfaction] attached={sat_attached}")
 
-    # POLARIS-derived transfer signal (works without ROD): nominal-consideration
-    # recent sale OR post-decedent recent sale.
+    # POLARIS-derived transfer signal: nominal-consideration recent sale OR
+    # estate-notice-then-sale-within-18mo.
     poll_transfer = 0
     for pid, lead in list(leads.items()):
         parcel = polaris_by_pid.get(pid)
         if not parcel:
             continue
-        has_estate = "estate" in lead["patterns"]
-        fired, sub_flags = _polaris_transfer_signal(parcel, has_estate)
+        fired, sub_flags = _polaris_transfer_signal(parcel, lead["signals"].get("estate") or [])
         if fired:
             lead["patterns"].add("transfer")
             lead["flags"].extend(sub_flags)
@@ -700,6 +787,206 @@ def score_lead(lead: dict, parcel: dict) -> dict:
 
 SIGNAL_CAP_PER_PATTERN = 3
 
+# Top-50 US surnames by Census 2010. We refuse to match estate notices to
+# parcels on last+first alone when last is in this list — too noisy.
+COMMON_SURNAMES = {
+    "SMITH", "JOHNSON", "WILLIAMS", "BROWN", "JONES", "GARCIA", "MILLER",
+    "DAVIS", "RODRIGUEZ", "MARTINEZ", "HERNANDEZ", "LOPEZ", "GONZALEZ",
+    "WILSON", "ANDERSON", "THOMAS", "TAYLOR", "MOORE", "JACKSON", "MARTIN",
+    "LEE", "PEREZ", "THOMPSON", "WHITE", "HARRIS", "SANCHEZ", "CLARK",
+    "RAMIREZ", "LEWIS", "ROBINSON", "WALKER", "YOUNG", "ALLEN", "KING",
+    "WRIGHT", "SCOTT", "TORRES", "NGUYEN", "HILL", "FLORES", "GREEN",
+    "ADAMS", "NELSON", "BAKER", "HALL", "RIVERA", "CAMPBELL", "MITCHELL",
+    "CARTER", "ROBERTS",
+}
+
+# Substrings that, when present in an owner name, mark the owner as an entity
+# (LLC / corp / trust / etc.) rather than an individual.
+ENTITY_TOKENS = {
+    "LLC", "L.L.C", "L L C", "INC", "INCORPORATED", "CORP", "CORPORATION",
+    "CO.", "COMPANY", "TRUST", "TRUSTEE", "LP", "LLP", "L.P", "L.L.P",
+    "PLLC", "PA", "P.A", "ASSOCIATES", "ASSOCIATION", "ASSOC", "FOUNDATION",
+    "LIMITED", "PARTNERS", "PARTNERSHIP", "ESTATE OF",
+}
+
+# Substrings inside an entity name that suggest a landlord / investor (vs. a
+# bank, religious org, HOA, etc).
+LANDLORD_TOKENS = {
+    "RENTAL", "RENTALS", "PROPERTIES", "PROPERTY", "HOLDINGS", "INVESTMENTS",
+    "REALTY", "REAL ESTATE", "HOMES", "RE LLC", "REI", "GROUP",
+}
+
+NAME_SUFFIXES = {"JR", "SR", "II", "III", "IV", "V"}
+
+
+def _ms_to_dt(ms) -> datetime | None:
+    if ms is None or ms == "":
+        return None
+    try:
+        v = int(float(ms))
+    except (TypeError, ValueError):
+        return None
+    if not (0 < v < 4_102_444_800_000):
+        return None
+    try:
+        return datetime.fromtimestamp(v / 1000, tz=timezone.utc)
+    except (OSError, OverflowError, ValueError):
+        return None
+
+
+def _parse_estate_posted(s: str) -> datetime | None:
+    if not s:
+        return None
+    s = s.strip()
+    for fmt in ("%Y-%m-%d", "%b %d, %Y", "%m/%d/%Y", "%B %d, %Y"):
+        try:
+            return datetime.strptime(s, fmt).replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue
+    return None
+
+
+def is_entity_owner(owner: str) -> bool:
+    if not owner:
+        return False
+    up = " " + owner.upper() + " "
+    for tok in ENTITY_TOKENS:
+        if " " + tok + " " in up or " " + tok + "." in up:
+            return True
+    return False
+
+
+def is_landlord_entity(owner: str) -> bool:
+    if not owner:
+        return False
+    up = owner.upper()
+    return is_entity_owner(owner) and any(tok in up for tok in LANDLORD_TOKENS)
+
+
+def parse_owner_name(first_field: str, last_field: str) -> dict:
+    """POLARIS stores names in two fields; the first field often contains
+    multiple components ("BRIAN K", "JOHN DAVID", "BRIAN K JR"). Parse into
+    first/middle/suffix/last components for downstream skip-trace prep.
+    Entity owners get is_entity=True and the components are left empty.
+    """
+    full_first = (first_field or "").strip()
+    last = (last_field or "").strip()
+    full_name = f"{full_first} {last}".strip()
+    if is_entity_owner(full_name):
+        return {
+            "first_name": "", "middle_name": "", "last_name": "",
+            "suffix": "", "is_entity": True, "full_name": full_name,
+        }
+    parts = [p for p in full_first.split() if p]
+    suffix = ""
+    if parts and parts[-1].rstrip(".").upper() in NAME_SUFFIXES:
+        suffix = parts.pop().rstrip(".").upper()
+    first_name = parts[0] if parts else ""
+    middle = " ".join(parts[1:]) if len(parts) > 1 else ""
+    # POLARIS sometimes puts a JR/SR in the last field; pull it out.
+    last_tokens = last.split()
+    if last_tokens and last_tokens[-1].rstrip(".").upper() in NAME_SUFFIXES:
+        suffix = suffix or last_tokens.pop().rstrip(".").upper()
+        last = " ".join(last_tokens)
+    return {
+        "first_name": first_name,
+        "middle_name": middle,
+        "last_name": last,
+        "suffix": suffix,
+        "is_entity": False,
+        "full_name": full_name,
+    }
+
+
+def compute_derived(parcel: dict, lead: dict) -> dict:
+    """Pure-data derived fields. No I/O, no global state — easy to test."""
+    out: dict = {}
+    sale_dt = _ms_to_dt(parcel.get("sale_date"))
+    today = datetime.now(timezone.utc)
+    sp = parcel.get("sale_price")
+    try:
+        sp = float(sp) if sp not in (None, "") else None
+    except (TypeError, ValueError):
+        sp = None
+    tmv = parcel.get("total_market_value") or parcel.get("total_value")
+    try:
+        tmv = float(tmv) if tmv not in (None, "") else None
+    except (TypeError, ValueError):
+        tmv = None
+    lv = parcel.get("land_value")
+    try:
+        lv = float(lv) if lv not in (None, "") else None
+    except (TypeError, ValueError):
+        lv = None
+
+    # equity_pct (very rough — POLARIS doesn't carry mortgage balance, so we
+    # use the gap between purchase price and current market value as a floor
+    # estimate of paydown + appreciation. Real equity is unknown without the
+    # current loan balance from ROD/lender.)
+    if sp is not None and tmv is not None and tmv > 0 and sp > 0:
+        eq = max(0.0, min(100.0, (1.0 - sp / tmv) * 100.0))
+        out["estimated_equity_pct"] = round(eq, 1)
+    else:
+        out["estimated_equity_pct"] = None
+
+    # years_owned
+    if sale_dt:
+        out["years_owned"] = round((today - sale_dt).days / 365.25, 1)
+    else:
+        out["years_owned"] = None
+
+    # absentee_strict + is_likely_landlord
+    out["is_absentee"] = bool(parcel.get("absentee"))
+    owner = parcel.get("owner") or ""
+    is_entity = is_entity_owner(owner)
+    out["is_entity"] = is_entity
+    if out["is_absentee"] and not is_entity:
+        out["is_likely_landlord"] = True
+    elif is_landlord_entity(owner):
+        out["is_likely_landlord"] = True
+    else:
+        out["is_likely_landlord"] = False
+
+    # Exemption flags. POLARIS `exemption` is free text; common values include
+    # "HOMESTEAD", "ELDERLY", "DISABLED VETERAN", "DISABLED", combinations.
+    ex = (parcel.get("exemption") or "").upper()
+    out["is_homestead"] = "HOMESTEAD" in ex
+    out["is_senior"] = "ELDERLY" in ex or "ELDER " in ex or "OVER 65" in ex
+    out["is_disabled_veteran"] = "DISABLED VET" in ex or "VETERAN" in ex
+    out["is_disabled"] = "DISABLED" in ex and "VET" not in ex
+
+    # is_likely_inherited — not a hard signal, just a flag worth eyeballing
+    yb = parcel.get("year_built") or 0
+    structure_age = (today.year - int(yb)) if yb else 0
+    yo = out["years_owned"] or 0
+    out["is_likely_inherited"] = (
+        yo >= 25 and structure_age >= 50 and not is_entity
+        and not out["is_homestead"]
+    )
+
+    # lot_value_pct — high = land play (teardown candidate or land bank)
+    if lv is not None and tmv is not None and tmv > 0:
+        out["lot_value_pct"] = round(min(100.0, (lv / tmv) * 100.0), 1)
+    else:
+        out["lot_value_pct"] = None
+
+    # distress_score — a softer ranking number for in-tier sorting. Tier
+    # itself still comes only from stack_count.
+    score = 0
+    score += len(lead.get("patterns", set())) * 10
+    score += min(20, len(lead.get("flags", [])))
+    if out["is_absentee"]:
+        score += 5
+    if out["is_senior"]:
+        score += 5
+    if out.get("estimated_equity_pct") is not None and out["estimated_equity_pct"] >= 50:
+        score += 5
+    if (out["years_owned"] or 0) >= 20:
+        score += 3
+    out["distress_score"] = score
+
+    return out
+
 
 def _trim_signals(signals: dict) -> dict:
     """Keep at most SIGNAL_CAP_PER_PATTERN recent signals per pattern."""
@@ -721,28 +1008,95 @@ def _trim_signals(signals: dict) -> dict:
 
 def build_lead_record(pid: str, parcel: dict, lead: dict) -> dict:
     s = score_lead(lead, parcel)
+    derived = compute_derived(parcel, lead)
+    parsed_owner = parse_owner_name(parcel.get("owner1_first", ""), parcel.get("owner1_last", ""))
+    parsed_owner2 = parse_owner_name(parcel.get("owner2_first", ""), parcel.get("owner2_last", ""))
+    polaris_url = f"https://polaris3g.mecklenburgcountync.gov/?taxid={pid}" if pid else ""
     return {
+        # ---- Identity ----
         "pid": pid,
+        "nc_pin": parcel.get("nc_pin") or "",
+        "polaris_url": polaris_url,
+        # ---- Site address ----
         "address": parcel.get("address") or "",
+        "street_num": parcel.get("street_num") or "",
+        "street_name": parcel.get("street_name") or "",
         "city": parcel.get("loc_city") or "",
+        # ---- Owner ----
         "owner": parcel.get("owner") or "",
         "owner2": parcel.get("owner2") or "",
+        "owner_parsed": parsed_owner,
+        "owner2_parsed": parsed_owner2,
+        "is_entity": derived["is_entity"],
+        # ---- Mailing address (structured for skip-trace export) ----
         "mail_addr": parcel.get("mail_addr") or "",
+        "mail_addr2": parcel.get("mail_addr2") or "",
         "mail_city": parcel.get("mail_city") or "",
         "mail_state": parcel.get("mail_state") or "",
         "mail_zip": parcel.get("mail_zip") or "",
-        "absentee": parcel.get("absentee", False),
+        # ---- Structure ----
         "year_built": parcel.get("year_built"),
+        "eff_year_built": parcel.get("eff_year_built"),
+        "building_type": parcel.get("building_type") or "",
+        "land_use": parcel.get("land_use") or "",
+        "land_use_code": parcel.get("land_use_code") or "",
+        "grade": parcel.get("grade") or "",
+        "story_height": parcel.get("story_height") or "",
+        "vacant_or_improved": parcel.get("vacant_or_improved") or "",
+        "exterior_wall": parcel.get("exterior_wall") or "",
+        "foundation": parcel.get("foundation") or "",
+        "roof_cover": parcel.get("roof_cover") or "",
+        "heat": parcel.get("heat") or "",
+        "heat_fuel": parcel.get("heat_fuel") or "",
+        "heated_area": parcel.get("heated_area"),
+        "total_area": parcel.get("total_area"),
+        "bedrooms": parcel.get("bedrooms"),
+        "fullbath": parcel.get("fullbath"),
+        "halfbath": parcel.get("halfbath"),
+        "fireplaces": parcel.get("fireplaces"),
+        "residential_units": parcel.get("residential_units"),
+        # ---- Land ----
+        "gis_acres": parcel.get("gis_acres"),
+        "total_acres": parcel.get("total_acres"),
+        "legal_acres": parcel.get("legal_acres"),
+        # ---- Value ----
         "total_market_value": parcel.get("total_market_value"),
-        "land_use": parcel.get("land_use"),
-        "vacant_or_improved": parcel.get("vacant_or_improved"),
-        "owner_type": parcel.get("owner_type"),
+        "total_value": parcel.get("total_value"),
+        "land_value": parcel.get("land_value"),
+        "building_value": parcel.get("building_value"),
+        # ---- Sale ----
+        "sale_price": parcel.get("sale_price"),
+        "sale_date": parcel.get("sale_date"),
+        "deed_type": parcel.get("deed_type") or "",
+        "valid_sale": parcel.get("valid_sale") or "",
+        "deed_book": parcel.get("deed_book") or "",
+        "deed_page": parcel.get("deed_page") or "",
+        # ---- Geography ----
+        "neighborhood": parcel.get("neighborhood_desc") or parcel.get("neighborhood") or "",
+        "tax_district": parcel.get("tax_district") or "",
+        "owner_type": parcel.get("owner_type") or "",
+        "exemption": parcel.get("exemption") or "",
+        # ---- Derived ----
+        "estimated_equity_pct": derived["estimated_equity_pct"],
+        "years_owned": derived["years_owned"],
+        "is_absentee": derived["is_absentee"],
+        "is_likely_landlord": derived["is_likely_landlord"],
+        "is_homestead": derived["is_homestead"],
+        "is_senior": derived["is_senior"],
+        "is_disabled_veteran": derived["is_disabled_veteran"],
+        "is_disabled": derived["is_disabled"],
+        "is_likely_inherited": derived["is_likely_inherited"],
+        "lot_value_pct": derived["lot_value_pct"],
+        "distress_score": derived["distress_score"],
+        # ---- Pattern + scoring (kept identical to prior schema for compat) ----
         "patterns": s["patterns"],
         "stack_count": s["stack_count"],
         "tier": s["tier"],
         "raw_score": s["raw_score"],
         "flags": s["flags"],
         "signals": _trim_signals(lead["signals"]),
+        # legacy alias for the dashboard
+        "absentee": derived["is_absentee"],
     }
 
 
@@ -760,6 +1114,21 @@ def dry_run_distribution(leads: dict[str, dict], polaris_by_pid: dict, sample_n:
     for t in (TIER_HOT, TIER_WARM, TIER_ACTIVE):
         print(f"  {t:7s} {tiers[t]}")
     print(f"  pattern hits: {dict(pat_counts)}")
+
+
+def _git_commit_hash() -> str:
+    """Best-effort current git commit (short hash). Returns "" on any failure."""
+    try:
+        import subprocess
+        out = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=str(PROJECT_ROOT), capture_output=True, text=True, timeout=5,
+        )
+        if out.returncode == 0:
+            return out.stdout.strip()
+    except Exception:
+        pass
+    return ""
 
 
 def write_output(leads: dict[str, dict], polaris_by_pid: dict, log) -> dict:
@@ -781,11 +1150,25 @@ def write_output(leads: dict[str, dict], polaris_by_pid: dict, log) -> dict:
         for p in r["patterns"]:
             pattern_counts[p] += 1
 
+    # High-confidence warm = warm tier with at least one of:
+    # demolition_order, code_housing_case, or absentee owner. Used in
+    # methodology + dashboard quality metric.
+    high_conf_warm = sum(
+        1 for r in records
+        if r["tier"] == "warm" and (
+            "demolition_order" in r["flags"]
+            or "code_housing_case" in r["flags"]
+            or r.get("is_absentee")
+        )
+    )
+
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "source_commit": _git_commit_hash(),
         "total": len(records),
         "tier_counts": dict(tier_counts),
         "pattern_counts": dict(pattern_counts),
+        "high_confidence_warm": high_conf_warm,
         "patterns_legend": {
             "jfc": "Judicial Foreclosure (Power of Sale)",
             "tax": "Tax Distress (delinquency / In Rem / mortgage-style)",

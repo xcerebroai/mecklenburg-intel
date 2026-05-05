@@ -28,6 +28,15 @@ Thumbs.db
 .idea/
 .claude/
 
+# Playwright persistent browser profile (cookies, local storage, cache)
+scrapers/.rod_profile/
+
+# Per-doctype scraper checkpoints
+*.state.json
+
+# Verification dumps for manual review
+scrapers/verify_*.txt
+
 # Large files (>50MB GitHub limit)
 *.zip
 *.gz

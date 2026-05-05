@@ -3,36 +3,517 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Mecklenburg Intel — Phase 1</title>
+  <title>Mecklenburg Intel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #0A0A0A;
       --panel: #0F172A;
+      --panel-2: #111c30;
       --accent: #3B82F6;
       --accent-soft: #60A5FA;
       --text: #E5E7EB;
+      --text-dim: #94A3B8;
       --muted: #1F2937;
+      --border: #1E293B;
+      --hot: #F43F5E;
+      --warm: #F59E0B;
+      --active: #3B82F6;
+      --hot-bg: rgba(244, 63, 94, 0.12);
+      --warm-bg: rgba(245, 158, 11, 0.12);
+      --active-bg: rgba(59, 130, 246, 0.12);
     }
     * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif; }
-    .wrap { max-width: 960px; margin: 0 auto; padding: 48px 24px; }
-    h1 { font-size: 28px; margin: 0 0 8px 0; letter-spacing: -0.5px; }
-    .tag { color: var(--accent-soft); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
-    .panel { background: var(--panel); border: 1px solid var(--muted); border-radius: 8px; padding: 24px; margin-top: 24px; }
-    .panel h2 { margin: 0 0 12px 0; font-size: 16px; color: var(--accent-soft); }
-    p { line-height: 1.55; }
-    code { background: var(--muted); padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--bg); color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      font-size: 14px; line-height: 1.45;
+    }
+    .wrap { max-width: 1400px; margin: 0 auto; padding: 32px 24px 64px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 32px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-soft) 100%);
+      display: grid; place-items: center;
+      box-shadow: 0 0 24px rgba(59, 130, 246, 0.35);
+      font-weight: 700; font-size: 14px; color: #0A0A0A;
+    }
+    h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.4px; }
+    .tag { color: var(--accent-soft); font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600; }
+    .meta { color: var(--text-dim); font-size: 12px; }
+
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .stat {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+      padding: 16px 18px;
+    }
+    .stat .label { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+    .stat .value { font-size: 28px; font-weight: 700; margin-top: 6px; letter-spacing: -0.5px; }
+    .stat.hot .value { color: var(--hot); }
+    .stat.warm .value { color: var(--warm); }
+    .stat.active .value { color: var(--active); }
+
+    .filterbar {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+      padding: 16px; margin-bottom: 16px;
+      display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+    }
+    .filter-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .filter-group .lbl { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-right: 6px; }
+    .pill {
+      background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+      padding: 5px 12px; border-radius: 999px;
+      font-size: 12px; font-weight: 500; cursor: pointer;
+      transition: all 0.15s; user-select: none;
+    }
+    .pill:hover { border-color: var(--accent); }
+    .pill.on {
+      background: var(--accent); color: #0A0A0A; border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+    }
+    .pill .ct { font-weight: 700; margin-left: 6px; opacity: 0.85; }
+    .search {
+      flex: 1 1 220px; min-width: 200px;
+      background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+      padding: 8px 12px; border-radius: 8px;
+      font-family: inherit; font-size: 13px;
+    }
+    .search:focus { outline: none; border-color: var(--accent); }
+    .clear {
+      background: transparent; color: var(--text-dim); border: 1px solid var(--border);
+      padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;
+    }
+    .clear:hover { color: var(--text); border-color: var(--accent); }
+
+    .summary {
+      color: var(--text-dim); font-size: 13px; margin: 8px 4px 12px;
+    }
+    .summary strong { color: var(--text); }
+
+    table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    thead th {
+      background: var(--panel-2); color: var(--text-dim);
+      font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px;
+      text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--border);
+      cursor: pointer; user-select: none; white-space: nowrap;
+    }
+    thead th:hover { color: var(--accent-soft); }
+    thead th .arrow { color: var(--accent); margin-left: 4px; }
+    tbody td {
+      padding: 12px 14px; border-bottom: 1px solid var(--border);
+      vertical-align: top; font-size: 13px;
+    }
+    tbody tr:hover { background: var(--panel-2); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    .tier-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 999px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+    }
+    .tier-badge.hot { background: var(--hot-bg); color: var(--hot); }
+    .tier-badge.warm { background: var(--warm-bg); color: var(--warm); }
+    .tier-badge.active { background: var(--active-bg); color: var(--active); }
+
+    .pat {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.5px; margin-right: 4px;
+      background: var(--panel-2); color: var(--accent-soft); border: 1px solid var(--border);
+    }
+    .pat.jfc { color: #F87171; border-color: rgba(248, 113, 113, 0.3); }
+    .pat.tax { color: #FBBF24; border-color: rgba(251, 191, 36, 0.3); }
+    .pat.estate { color: #A78BFA; border-color: rgba(167, 139, 250, 0.3); }
+    .pat.code { color: #34D399; border-color: rgba(52, 211, 153, 0.3); }
+    .pat.lien { color: #F472B6; border-color: rgba(244, 114, 182, 0.3); }
+    .pat.transfer { color: #FCD34D; border-color: rgba(252, 211, 77, 0.3); }
+
+    .flag {
+      display: inline-block; padding: 1px 6px; border-radius: 3px;
+      font-size: 10px; font-weight: 500; margin: 1px 2px 1px 0;
+      background: var(--muted); color: var(--text-dim);
+    }
+    .flag.urgent { background: rgba(244, 63, 94, 0.15); color: var(--hot); }
+
+    .addr { font-weight: 600; color: var(--text); }
+    .city { color: var(--text-dim); font-size: 11px; margin-top: 2px; }
+    .owner { color: var(--text); font-size: 13px; }
+    .mailto-self { color: var(--text-dim); font-size: 11px; }
+    .mailto-elsewhere { color: var(--warm); font-size: 11px; font-weight: 600; }
+
+    .empty { text-align: center; padding: 48px; color: var(--text-dim); }
+    .legend { font-size: 11px; color: var(--text-dim); margin-top: 24px; }
+    .legend span { margin-right: 14px; }
+
+    .footer {
+      text-align: center; color: var(--text-dim); font-size: 11px;
+      margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border);
+    }
+    .footer .bolt { color: var(--accent); }
+
+    .num { font-variant-numeric: tabular-nums; }
+    .small { font-size: 11px; color: var(--text-dim); }
+
+    a { color: var(--accent-soft); text-decoration: none; }
+    a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="tag">Mecklenburg Intel</div>
-    <h1>Phase 1 — Reconnaissance</h1>
-    <div class="panel">
-      <h2>Status</h2>
-      <p>Project scaffold only. No data wired up yet.</p>
-      <p>See <code>RECON.md</code> for source inventory and the NC-adapted distress pattern stack.</p>
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark">M</div>
+        <div>
+          <div class="tag">Mecklenburg Intel</div>
+          <h1>Motivated Seller Pipeline · Charlotte / Mecklenburg County, NC</h1>
+        </div>
+      </div>
+      <div class="meta" id="meta">loading...</div>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="filterbar">
+      <div class="filter-group">
+        <span class="lbl">Tier</span>
+        <span class="pill on" data-filter="tier" data-value="all">All</span>
+        <span class="pill" data-filter="tier" data-value="hot">Hot</span>
+        <span class="pill" data-filter="tier" data-value="warm">Warm</span>
+        <span class="pill" data-filter="tier" data-value="active">Active</span>
+      </div>
+      <div class="filter-group" id="patternfilters">
+        <span class="lbl">Pattern</span>
+        <!-- pills populated dynamically -->
+      </div>
+      <input class="search" id="search" type="text" placeholder="Search address, owner, PID, case#..." />
+      <button class="clear" id="clear">Reset</button>
+    </div>
+
+    <div class="summary" id="summary"></div>
+
+    <table>
+      <thead>
+        <tr>
+          <th data-sort="tier">Tier</th>
+          <th data-sort="address">Address</th>
+          <th data-sort="owner">Owner</th>
+          <th>Patterns</th>
+          <th>Flags</th>
+          <th data-sort="year_built">Built</th>
+          <th data-sort="total_market_value">Value</th>
+          <th>Mail Addr</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="8" class="empty">Loading leads...</td></tr>
+      </tbody>
+    </table>
+
+    <div class="legend">
+      <span><b style="color:var(--accent-soft)">Patterns:</b></span>
+      <span class="pat jfc">JFC</span> Judicial Foreclosure
+      <span class="pat tax">TAX</span> Tax Distress
+      <span class="pat estate">ESTATE</span> Probate Opened
+      <span class="pat code">CODE</span> Code / Demolition
+      <span class="pat lien">LIEN</span> Lien / Judgment
+      <span class="pat transfer">TRANSFER</span> Distressed Conveyance
+      <br><br>
+      <b style="color:var(--accent-soft)">Tier rules:</b>
+      <span><span class="tier-badge hot">HOT</span> 3+ patterns stacked</span>
+      <span><span class="tier-badge warm">WARM</span> 2 patterns</span>
+      <span><span class="tier-badge active">ACTIVE</span> 1 pattern</span>
+    </div>
+
+    <div class="footer">
+      <span class="bolt">⚡</span> Mecklenburg Intel · POC · Built by Jarvis
     </div>
   </div>
+
+<script>
+"use strict";
+
+const PATTERN_LABELS = {
+  jfc: "Judicial Foreclosure",
+  tax: "Tax Distress",
+  estate: "Probate / Estate",
+  code: "Code / Demolition",
+  lien: "Lien / Judgment",
+  transfer: "Distressed Conveyance"
+};
+const TIER_RANK = { hot: 3, warm: 2, active: 1 };
+
+let DATA = null;
+let RECORDS = [];
+const filters = {
+  tier: "all",
+  patterns: new Set(),   // empty = all patterns
+  search: ""
+};
+const sortState = { key: "tier", dir: "desc" };
+
+// ---- Single source of truth for both filter counts AND filter results.
+// All visible filtering MUST go through matches(). Don't write a parallel
+// filter elsewhere — the Two-Truths Bug starts there.
+function matches(lead) {
+  if (filters.tier !== "all" && lead.tier !== filters.tier) return false;
+  if (filters.patterns.size > 0) {
+    let any = false;
+    for (const p of lead.patterns) {
+      if (filters.patterns.has(p)) { any = true; break; }
+    }
+    if (!any) return false;
+  }
+  if (filters.search) {
+    const q = filters.search.toLowerCase();
+    const blob = [
+      lead.pid, lead.address, lead.owner, lead.owner2,
+      lead.mail_addr, lead.mail_city, lead.mail_zip,
+      ...(lead.flags || [])
+    ].join(" ").toLowerCase();
+    if (!blob.includes(q)) {
+      // also search inside signal payloads (case numbers, decedent names)
+      const sigBlob = JSON.stringify(lead.signals || {}).toLowerCase();
+      if (!sigBlob.includes(q)) return false;
+    }
+  }
+  return true;
+}
+
+function fmtMoney(v) {
+  if (v == null || v === "" || v === 0) return "<span class='small'>–</span>";
+  const n = Number(v);
+  if (!isFinite(n)) return v;
+  return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
+}
+
+function fmtYear(v) {
+  if (v == null || v === "" || v === 0) return "<span class='small'>–</span>";
+  return String(v);
+}
+
+function patternPill(p) {
+  return `<span class="pat ${p}" title="${PATTERN_LABELS[p] || p}">${p.toUpperCase()}</span>`;
+}
+
+function flagBadge(f) {
+  const urgent = (f === "demolition_order" || f === "code_repeat_violator" || f === "heirs_property_indicator");
+  return `<span class="flag ${urgent ? "urgent" : ""}">${f.replace(/_/g, " ")}</span>`;
+}
+
+function rowHtml(lead) {
+  const tierBadge = `<span class="tier-badge ${lead.tier}">${lead.tier}</span>`;
+  const pats = (lead.patterns || []).map(patternPill).join("");
+  const flags = (lead.flags || []).slice(0, 6).map(flagBadge).join("");
+  const mailIsSelf = !lead.mail_addr || (lead.mail_addr.toUpperCase().split(",")[0].trim() === (lead.address || "").toUpperCase().split(",")[0].trim());
+  const mailHtml = mailIsSelf
+    ? `<span class="mailto-self">on-site</span>`
+    : `<span class="mailto-elsewhere">${escape(lead.mail_addr)} ${lead.mail_city ? escape(lead.mail_city) : ""} ${lead.mail_state ? escape(lead.mail_state) : ""} ${lead.mail_zip ? escape(lead.mail_zip) : ""}</span>`;
+  return `
+    <tr>
+      <td>${tierBadge}<div class="small num">${lead.stack_count}p · ${lead.raw_score}</div></td>
+      <td>
+        <div class="addr">${escape(lead.address || "—")}</div>
+        <div class="city">PID ${escape(lead.pid)}${lead.city ? " · " + escape(lead.city) : ""}</div>
+      </td>
+      <td>
+        <div class="owner">${escape(lead.owner || "—")}</div>
+        ${lead.owner2 ? `<div class="small">${escape(lead.owner2)}</div>` : ""}
+      </td>
+      <td>${pats}</td>
+      <td>${flags || "<span class='small'>–</span>"}</td>
+      <td class="num">${fmtYear(lead.year_built)}</td>
+      <td class="num">${fmtMoney(lead.total_market_value)}</td>
+      <td>${mailHtml}</td>
+    </tr>
+  `;
+}
+
+function escape(s) {
+  if (s == null) return "";
+  return String(s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function compareForSort(a, b, key) {
+  if (key === "tier") {
+    return (TIER_RANK[a.tier] || 0) - (TIER_RANK[b.tier] || 0)
+      || (a.stack_count - b.stack_count)
+      || (a.raw_score - b.raw_score);
+  }
+  const av = a[key], bv = b[key];
+  if (av == null && bv == null) return 0;
+  if (av == null) return -1;
+  if (bv == null) return 1;
+  if (typeof av === "number" && typeof bv === "number") return av - bv;
+  return String(av).localeCompare(String(bv));
+}
+
+function render() {
+  // Apply matches() ONCE — this is the single filtered set.
+  const filtered = RECORDS.filter(matches);
+
+  filtered.sort((a, b) => {
+    const c = compareForSort(a, b, sortState.key);
+    return sortState.dir === "desc" ? -c : c;
+  });
+
+  // ---- Stats: derived from the SAME filtered array. No parallel counting.
+  const tierCounts = { hot: 0, warm: 0, active: 0 };
+  const patCounts = { jfc: 0, tax: 0, estate: 0, code: 0, lien: 0, transfer: 0 };
+  for (const r of filtered) {
+    tierCounts[r.tier] = (tierCounts[r.tier] || 0) + 1;
+    for (const p of r.patterns || []) patCounts[p] = (patCounts[p] || 0) + 1;
+  }
+
+  document.getElementById("stats").innerHTML = `
+    <div class="stat"><div class="label">Total Visible</div><div class="value num">${filtered.length.toLocaleString()}</div></div>
+    <div class="stat hot"><div class="label">Hot · 3+</div><div class="value num">${tierCounts.hot.toLocaleString()}</div></div>
+    <div class="stat warm"><div class="label">Warm · 2</div><div class="value num">${tierCounts.warm.toLocaleString()}</div></div>
+    <div class="stat active"><div class="label">Active · 1</div><div class="value num">${tierCounts.active.toLocaleString()}</div></div>
+  `;
+
+  // Update pattern pill counts so the user sees how many leads match each.
+  document.querySelectorAll('#patternfilters .pill').forEach(p => {
+    const v = p.getAttribute("data-value");
+    const ct = patCounts[v] || 0;
+    const label = p.getAttribute("data-label") || v.toUpperCase();
+    p.innerHTML = `${label}<span class="ct num">${ct.toLocaleString()}</span>`;
+  });
+
+  // Summary line — always derived from the same filtered array.
+  document.getElementById("summary").innerHTML =
+    `Showing <strong>${filtered.length.toLocaleString()}</strong> of <strong>${RECORDS.length.toLocaleString()}</strong> leads. ` +
+    `Tier filter: <strong>${filters.tier}</strong>. ` +
+    (filters.patterns.size > 0
+      ? `Pattern filter: <strong>${[...filters.patterns].join(", ")}</strong>. `
+      : `All patterns. `) +
+    (filters.search ? `Search: "<strong>${escape(filters.search)}</strong>". ` : ``);
+
+  // Update th sort indicator
+  document.querySelectorAll("th[data-sort]").forEach(th => {
+    const k = th.getAttribute("data-sort");
+    const arrow = th.querySelector(".arrow");
+    if (arrow) arrow.remove();
+    if (k === sortState.key) {
+      const sp = document.createElement("span");
+      sp.className = "arrow";
+      sp.textContent = sortState.dir === "desc" ? " ▼" : " ▲";
+      th.appendChild(sp);
+    }
+  });
+
+  // Render table
+  const tbody = document.getElementById("tbody");
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" class="empty">No leads match the current filters.</td></tr>`;
+    return;
+  }
+  // Cap rendered rows for performance; user can refine filters
+  const RENDER_CAP = 1000;
+  const slice = filtered.slice(0, RENDER_CAP);
+  tbody.innerHTML = slice.map(rowHtml).join("");
+  if (filtered.length > RENDER_CAP) {
+    tbody.innerHTML += `<tr><td colspan="8" class="empty">… ${(filtered.length - RENDER_CAP).toLocaleString()} more rows hidden. Use filters or search to narrow.</td></tr>`;
+  }
+}
+
+function attachListeners() {
+  // Tier pills
+  document.querySelectorAll('.pill[data-filter="tier"]').forEach(p => {
+    p.addEventListener("click", () => {
+      document.querySelectorAll('.pill[data-filter="tier"]').forEach(x => x.classList.remove("on"));
+      p.classList.add("on");
+      filters.tier = p.getAttribute("data-value");
+      render();
+    });
+  });
+
+  // Pattern pills (built dynamically)
+  const pf = document.getElementById("patternfilters");
+  ["jfc", "tax", "estate", "code", "lien", "transfer"].forEach(k => {
+    const sp = document.createElement("span");
+    sp.className = "pill";
+    sp.setAttribute("data-filter", "pattern");
+    sp.setAttribute("data-value", k);
+    sp.setAttribute("data-label", k.toUpperCase());
+    sp.textContent = k.toUpperCase();
+    sp.addEventListener("click", () => {
+      if (filters.patterns.has(k)) {
+        filters.patterns.delete(k);
+        sp.classList.remove("on");
+      } else {
+        filters.patterns.add(k);
+        sp.classList.add("on");
+      }
+      render();
+    });
+    pf.appendChild(sp);
+  });
+
+  // Search
+  const search = document.getElementById("search");
+  let searchTimer = null;
+  search.addEventListener("input", () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      filters.search = search.value.trim();
+      render();
+    }, 120);
+  });
+
+  // Sortable headers
+  document.querySelectorAll("th[data-sort]").forEach(th => {
+    th.addEventListener("click", () => {
+      const k = th.getAttribute("data-sort");
+      if (sortState.key === k) {
+        sortState.dir = sortState.dir === "desc" ? "asc" : "desc";
+      } else {
+        sortState.key = k;
+        sortState.dir = "desc";
+      }
+      render();
+    });
+  });
+
+  // Reset
+  document.getElementById("clear").addEventListener("click", () => {
+    filters.tier = "all";
+    filters.patterns.clear();
+    filters.search = "";
+    document.querySelectorAll('.pill[data-filter="tier"]').forEach(x => {
+      x.classList.toggle("on", x.getAttribute("data-value") === "all");
+    });
+    document.querySelectorAll('.pill[data-filter="pattern"]').forEach(x => x.classList.remove("on"));
+    document.getElementById("search").value = "";
+    render();
+  });
+}
+
+async function load() {
+  try {
+    const r = await fetch("data/leads.json?t=" + Date.now());
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    DATA = await r.json();
+    RECORDS = DATA.records || [];
+    document.getElementById("meta").innerHTML =
+      `<span>${RECORDS.length.toLocaleString()} leads · generated ${
+        DATA.generated_at ? new Date(DATA.generated_at).toLocaleString() : "—"
+      }</span>`;
+    render();
+  } catch (e) {
+    document.getElementById("tbody").innerHTML =
+      `<tr><td colspan="8" class="empty">Failed to load leads.json: ${escape(String(e))}</td></tr>`;
+    document.getElementById("meta").textContent = "load failed";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  attachListeners();
+  load();
+});
+</script>
 </body>
 </html>

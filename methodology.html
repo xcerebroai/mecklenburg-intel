@@ -147,7 +147,7 @@
     <ul>
       <li>Mecktimes notice with an <code>SP-numbered</code> case (Special Proceeding) and "Foreclosure of Deed of Trust" / "Power of Sale" language</li>
       <li>Substitute-trustee sale notice in mecktimes</li>
-      <li>(When ROD data is wired) — recorded "Notice of Substitute Trustee Sale"</li>
+      <li>Recorded "Notice of Substitute Trustee Sale" in imported deed records</li>
     </ul>
 
     <h3><span class="pat tax">TAX</span> Tax Distress</h3>
@@ -182,7 +182,7 @@
     <ul>
       <li>Mecktimes notice with HOA-claim-of-lien language</li>
       <li>Civil execution sale (CV-numbered case, sheriff's execution for unpaid debt)</li>
-      <li>(When ROD data is wired) — Memo of Judgment, Mechanics Lien, IRS / state tax lien, Lis Pendens</li>
+      <li>Memo of Judgment, Mechanics Lien, IRS / state tax lien, and Lis Pendens present in imported deed records</li>
     </ul>
 
     <h3><span class="pat transfer">TRANSFER</span> Distressed Conveyance</h3>
@@ -226,62 +226,36 @@
       <li><code>distress_score</code> — pattern count × 10 + flag count + small bumps for absentee / senior / equity ≥ 50% / years_owned ≥ 20. Used only for in-tier sorting.</li>
     </ul>
 
-    <h2>Anti-bot blockers we hit</h2>
-    <div class="callout warn">
-      <b>Mecktimes (Cloudflare TLS fingerprint):</b> the live scraper at <code>scrapers/foreclosures.py</code> and <code>scrapers/estates.py</code> is blocked from the build machine even with <code>curl_cffi</code> impersonating Chrome. The seed data for both was extracted via a side-channel renderer. The scraper detects the 403 and exits cleanly without overwriting data on disk. Workarounds documented in <code>scrapers/README.md</code>.
-    </div>
-    <div class="callout warn">
-      <b>Aumentum / Mecklenburg Register of Deeds:</b> <code>meckrod.manatron.com</code> is fully login-gated. Phase 3 reconnaissance confirmed all search paths return "Session state is not available" unauthenticated, default <code>guest</code>/<code>guest</code> credentials fail, and there is no documented public account on this deployment. The pipeline ships with a CSV-import path (<code>scrapers/rod.py</code>) so a logged-in human export can hydrate the lien / quitclaim / DOT signals — until that data exists, the <code>lien</code> pattern only fires from mecktimes HOA notices and CV-execution sales (5 records in this build), and <code>transfer</code> fires only from POLARIS sale heuristics.
-    </div>
-    <div class="callout warn">
-      <b>eCourts (Tyler Odyssey):</b> CAPTCHA-gated and rate-limited. Not scraped. Newspaper notices in mecktimes cover the events (foreclosure sales, estate openings) that go to public notice by statute, with a 1-7 day publication lag.
-    </div>
+    <h2>Source coverage</h2>
+    <p>Foreclosure and estate notices come from Mecklenburg Times public notices. Register of Deeds records are included through county exports; deed-related signals depend on the records available in each import. Court events are represented by published notices, which can follow the underlying filing by 1–7 days.</p>
 
     <h2>What isn't included and why</h2>
     <ul>
-      <li><b>Register of Deeds full coverage</b> — no live scrape (login wall, see above). This caps the <code>lien</code> and <code>transfer</code> patterns and is the single biggest gap. Hot-tier leads (3+ patterns) become abundant once ROD data is loaded.</li>
+      <li><b>Register of Deeds</b> — coverage is limited to imported records. Lien and transfer results do not represent the complete county record index.</li>
       <li><b>County code enforcement (towns + unincorporated)</b> — code.mecknc.gov has no open-data feed. We only see the City of Charlotte HNS data.</li>
-      <li><b>Annual delinquent-tax PDF</b> — published once a year. Not parsed. The active-foreclosure flow (Kania + RBCWB) covers the higher-signal subset (delinquents whose case has progressed to a filing).</li>
-      <li><b>eCourts case detail</b> — see CAPTCHA note above. We get the public-notice slice; we don't get the underlying SP/E filing detail.</li>
+      <li><b>Tax records</b> — this dataset covers active foreclosure listings from Kania and RBCWB, rather than every account on the annual delinquent-tax list.</li>
+      <li><b>eCourts case detail</b> — published notices are included; underlying SP/E filing details are not part of this dataset.</li>
       <li><b>Skip-trace / contact info</b> — phone numbers, email addresses, current employers, deceased flags. Out of scope for a public-records pipeline. The CSV export includes empty <code>phone1</code>/<code>phone2</code>/<code>phone3</code>/<code>email1</code>/<code>email2</code> columns so a downstream skip-trace vendor can fill them.</li>
       <li><b>MLS / valuation models</b> — no Zillow / Redfin / RPR / RentCast. Tax-assessed values from POLARIS only.</li>
     </ul>
 
-    <h2>Honesty about precision</h2>
+    <h2>Record matching and accuracy</h2>
     <p>
-      This is a POC built over a few sessions on public data. Some specific
-      noise sources you should know about:
+      Public-record matches require review against the original source. Keep these data characteristics in mind:
     </p>
     <ul>
       <li><b>Estate matching</b> — fuzzy name match attaches the average decedent to roughly 3.4 parcels. Some of those are correct, some aren't. Always verify identity before outreach.</li>
       <li><b>Foreclosure address match</b> — about 75% of mecktimes notices match a POLARIS parcel by address. The rest fail because of unit/condo numbering, abbreviation differences, or out-of-county notices that slip through the county filter.</li>
-      <li><b>POLARIS multi-row history</b> — the CAMA layer has multiple rows per parcel (revaluation history). The pipeline keeps the first row per PID. A more correct approach is to keep the most recent <code>yearid</code>; that's a follow-up.</li>
+      <li><b>POLARIS multi-row history</b> — the CAMA layer has multiple rows per parcel (revaluation history). The dataset retains the first row per PID. Check the assessment year against the county record before relying on its valuation.</li>
       <li><b>Tax foreclosure mailing addresses</b> — Kania / RBCWB don't include mailing address; we get owner name and parcel ID. Mailing comes from POLARIS via the PID join.</li>
       <li><b>Code-case Closed cases excluded</b> — 99% of historical HNS cases are Closed. Including them inflated <code>code</code> matches to 122K parcels, with most being years-old nuisance complaints. Open/New only is a deliberate trade-off favoring precision over recall.</li>
     </ul>
 
-    <h2>Two-Truths invariant</h2>
-    <p>
-      The dashboard's filter counts and filtered table are both derived from a
-      single <code>matches(lead)</code> function — same call, same input array,
-      same output set. Every render is one filter pass; the stat cards and
-      the visible rows can never disagree. This is the canonical
-      mistake the framework spec warns against (the "Two-Truths Bug"); we
-      check it on every pipeline run.
-    </p>
-
-    <h2>Scope and intent</h2>
-    <p class="dim">
-      This is a test-run product, not a sold service. Built across a few sessions
-      to validate the Texas framework on a North Carolina judicial-foreclosure
-      jurisdiction with a different doc-type vocabulary. The structural
-      pieces — POLARIS pull, joining, six-pattern stack, dashboard, methodology
-      page, CSV-import for ROD when login becomes available — are reusable across
-      any NC county whose data sources resemble Mecklenburg's.
-    </p>
+    <h2>Using the dashboard</h2>
+    <p>Review public-record signals, narrow the parcel list with filters, and export the selected records for your workflow. Confirm ownership, property details, and case status with the original source before taking action.</p>
 
     <div class="footer">
-      <span class="bolt">⚡</span> Mecklenburg Intel · POC · <a href="index.html">dashboard</a>
+      <span class="bolt">⚡</span> Mecklenburg Intel · <a href="index.html">dashboard</a>
     </div>
   </div>
 </body>
